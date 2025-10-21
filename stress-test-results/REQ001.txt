@@ -1,0 +1,11 @@
+Request ID: REQ001
+Start Time: 2025-10-20 23:21:55.311
+End Time: 2025-10-20 23:22:00.760
+---
+<h1>Request REQ001 processed</h1>
+<p>PID: 54280, TID: 55288</p>
+<p>Client: 127.0.0.1:45736</p>
+
+
+HTTP_CODE: 200
+TIME_TOTAL: 5.441665s
