@@ -736,7 +736,7 @@ if __name__ == "__main__":
         print("This program must be run as root!")
         print("Usage: sudo python3 new_server_sniffer.py")
         exit(1)
-
+    
     sniffer = HTTPSServerSniffer()
     sniffer.run()
 
