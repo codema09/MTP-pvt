@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 """
 Integrated HTTPS Server Sniffer
@@ -19,7 +20,7 @@ import time
 import re
 import os
 
-# Combined eBPF Program
+# Combined eBPF Program (No changes needed here, included for completeness)
 BPF_PROGRAM = """
 #include <uapi/linux/ptrace.h>
 #include <net/sock.h>
@@ -79,6 +80,8 @@ struct resource_usage_t {
     u64 cpu_cycles_end;
     u64 cpu_cycles_used;
     u32 memory_kb;            // Resident memory (approx., userspace filled)
+    u64 system_overhead_ns;    // Time spent in our eBPF/userspace tracking
+    u64 thread_lifetime_ns;    // Estimated lifetime of thread processing this request
     u8 is_complete;
 };
 
@@ -127,6 +130,9 @@ BPF_HASH(tid_to_user_info, u32, struct user_info_t);
 // 3. Resource tracking
 BPF_HASH(request_resources, struct request_id_key_t, struct resource_usage_t);
 BPF_HASH(tid_to_request_id, u32, struct request_id_key_t);
+BPF_HASH(tid_to_thread_start, u32, u64);  // Track when thread first starts processing (first recv/read)
+// Per-TID cumulative overhead incurred by our probes (in ns)
+BPF_HASH(tid_to_overhead_ns, u32, u64);
 
 // 4. User request history
 BPF_HASH(user_request_history, struct username_key_t, struct user_history_t);
@@ -177,6 +183,7 @@ static struct sock* get_sock_from_fd(u32 fd) {
 TRACEPOINT_PROBE(syscalls, sys_enter_recvfrom) {
     u64 pid_tgid = bpf_get_current_pid_tgid();
     u32 fd = (u32)args->fd;
+    u64 t0 = bpf_ktime_get_ns();
     
     // ALWAYS recompute connection tuple for this FD to avoid stale cache
     struct sock *sk = get_sock_from_fd(fd);
@@ -201,12 +208,32 @@ TRACEPOINT_PROBE(syscalls, sys_enter_recvfrom) {
     fd_to_conn.update(&fd, &conn);
     tid_to_fd.update(&pid_tgid, &fd);
     
+    // Track thread start time (first time we see this TID processing)
+    u32 tid = (u32)pid_tgid;
+    u64 *existing_start = tid_to_thread_start.lookup(&tid);
+    if (existing_start == NULL) {
+        u64 start_time = bpf_ktime_get_ns();
+        tid_to_thread_start.update(&tid, &start_time);
+    }
+    
+    // Accumulate probe overhead for this TID
+    u32 tid_acc = (u32)pid_tgid;
+    u64 t1 = bpf_ktime_get_ns();
+    u64 delta = t1 - t0;
+    u64 *acc_ptr = tid_to_overhead_ns.lookup(&tid_acc);
+    if (acc_ptr) {
+        u64 acc = *acc_ptr + delta;
+        tid_to_overhead_ns.update(&tid_acc, &acc);
+    } else {
+        tid_to_overhead_ns.update(&tid_acc, &delta);
+    }
     return 0;
 }
 
 TRACEPOINT_PROBE(syscalls, sys_enter_read) {
     u64 pid_tgid = bpf_get_current_pid_tgid();
     u32 fd = (u32)args->fd;
+    u64 t0 = bpf_ktime_get_ns();
     
     // ALWAYS recompute connection tuple for this FD to avoid stale cache
     struct sock *sk = get_sock_from_fd(fd);
@@ -229,6 +256,25 @@ TRACEPOINT_PROBE(syscalls, sys_enter_read) {
     fd_to_conn.update(&fd, &conn);
     tid_to_fd.update(&pid_tgid, &fd);
     
+    // Track thread start time (first time we see this TID processing)
+    u32 tid = (u32)pid_tgid;
+    u64 *existing_start = tid_to_thread_start.lookup(&tid);
+    if (existing_start == NULL) {
+        u64 start_time = bpf_ktime_get_ns();
+        tid_to_thread_start.update(&tid, &start_time);
+    }
+    
+    // Accumulate probe overhead for this TID
+    u32 tid_acc = (u32)pid_tgid;
+    u64 t1 = bpf_ktime_get_ns();
+    u64 delta = t1 - t0;
+    u64 *acc_ptr = tid_to_overhead_ns.lookup(&tid_acc);
+    if (acc_ptr) {
+        u64 acc = *acc_ptr + delta;
+        tid_to_overhead_ns.update(&tid_acc, &acc);
+    } else {
+        tid_to_overhead_ns.update(&tid_acc, &delta);
+    }
     return 0;
 }
 
@@ -243,6 +289,7 @@ int probe_ssl_read_enter(struct pt_regs *ctx, void *ssl, void *buf, int num) {
 }
 
 int probe_ssl_read_exit(struct pt_regs *ctx) {
+    u64 t0 = bpf_ktime_get_ns();
     int ret = PT_REGS_RC(ctx);
     if (ret <= 0) return 0;
     
@@ -297,6 +344,18 @@ int probe_ssl_read_exit(struct pt_regs *ctx) {
     }
     
     ssl_events.perf_submit(ctx, evt, sizeof(*evt));
+
+    // Accumulate probe overhead for this TID
+    u32 tid_acc = (u32)pid_tgid;
+    u64 t1 = bpf_ktime_get_ns();
+    u64 delta = t1 - t0;
+    u64 *acc_ptr = tid_to_overhead_ns.lookup(&tid_acc);
+    if (acc_ptr) {
+        u64 acc = *acc_ptr + delta;
+        tid_to_overhead_ns.update(&tid_acc, &acc);
+    } else {
+        tid_to_overhead_ns.update(&tid_acc, &delta);
+    }
     return 0;
 }
 
@@ -317,6 +376,7 @@ int probe_ssl_read_ex_enter(struct pt_regs *ctx, void *ssl, void *buf,
 }
 
 int probe_ssl_read_ex_exit(struct pt_regs *ctx) {
+    u64 t0 = bpf_ktime_get_ns();
     int ret = PT_REGS_RC(ctx);
     if (ret != 1) return 0;
     
@@ -378,6 +438,58 @@ int probe_ssl_read_ex_exit(struct pt_regs *ctx) {
     }
     
     ssl_events.perf_submit(ctx, evt, sizeof(*evt));
+
+    // Accumulate probe overhead for this TID
+    u32 tid_acc = (u32)pid_tgid;
+    u64 t1 = bpf_ktime_get_ns();
+    u64 delta = t1 - t0;
+    u64 *acc_ptr = tid_to_overhead_ns.lookup(&tid_acc);
+    if (acc_ptr) {
+        u64 acc = *acc_ptr + delta;
+        tid_to_overhead_ns.update(&tid_acc, &acc);
+    } else {
+        tid_to_overhead_ns.update(&tid_acc, &delta);
+    }
+    return 0;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// THREAD EXIT TRACKING: Update thread lifetime when thread exits
+// ═══════════════════════════════════════════════════════════════
+
+TRACEPOINT_PROBE(sched, sched_process_exit) {
+    // This fires when a process/thread exits
+    // Get the TID (in Linux, threads are processes, so this works for threads too)
+    u64 pid_tgid = bpf_get_current_pid_tgid();
+    u32 tid = (u32)pid_tgid;
+    
+    // Look up thread start time
+    u64 *thread_start_ns = tid_to_thread_start.lookup(&tid);
+    if (thread_start_ns == NULL) return 0;  // Not a thread we're tracking
+    
+    // Get current time (when thread is exiting)
+    u64 exit_time_ns = bpf_ktime_get_ns();
+    
+    // Calculate final thread lifetime
+    u64 lifetime_ns = exit_time_ns - *thread_start_ns;
+    
+    // Find the request associated with this TID
+    struct request_id_key_t *req_id_key = tid_to_request_id.lookup(&tid);
+    if (req_id_key != NULL) {
+        // Update the resource_usage entry with final thread lifetime
+        struct resource_usage_t *usage = request_resources.lookup(req_id_key);
+        if (usage != NULL) {
+            // Update with final thread lifetime (thread has now exited)
+            usage->thread_lifetime_ns = lifetime_ns;
+            // Note: is_complete is managed by userspace resource tracking, not here
+        }
+    }
+    
+    // Clean up thread tracking maps
+    tid_to_thread_start.delete(&tid);
+    tid_to_fd.delete(&pid_tgid);
+    tid_to_overhead_ns.delete(&tid);
+    
     return 0;
 }
 """
@@ -388,17 +500,14 @@ class IntegratedSniffer:
         self.request_buffers = {}
         self.last_cleanup = 0
         self.request_counter = 0
-    
+
     def ip_to_str(self, ip):
         """Convert IPv4 from u32 to dotted-quad string (handles endianness)."""
         try:
-            # Many kernels deliver sk addresses read into u32 that appear in host
-            # order on little-endian machines. Use little-endian packing which
-            # renders 127.0.0.1 correctly when the raw value is 0x0100007f.
             return socket.inet_ntoa(struct.pack("<I", ip))
         except Exception:
             return "0.0.0.0"
-    
+
     def parse_http_headers(self, data):
         """Parse HTTP headers"""
         try:
@@ -411,46 +520,35 @@ class IntegratedSniffer:
             return text[:header_end]
         except:
             return ""
-    
+
     def extract_request_id(self, headers_text):
         """Extract or generate request ID"""
-        # Try to find X-Request-ID header
         for line in headers_text.split('\n'):
             line = line.strip()
             if line.lower().startswith('x-request-id:'):
                 return line[13:].strip()[:63]
         
-        # Try to extract from query params (e.g., ?id=REQ001)
         first_line = headers_text.split('\n')[0] if headers_text else ""
         match = re.search(r'[?&]id=([^&\s]+)', first_line)
         if match:
             return match.group(1)[:63]
         
-        # Generate unique ID
         self.request_counter += 1
         return f"AUTO_{self.request_counter:06d}"
-    
+
     def extract_user_info(self, headers_text):
         """Extract username, cookie, and authorization from headers"""
         user_info = {
-            'username': '',
-            'cookie': '',
-            'authorization': '',
-            'has_username': False,
-            'has_cookie': False,
-            'has_authorization': False
+            'username': '', 'cookie': '', 'authorization': '',
+            'has_username': False, 'has_cookie': False, 'has_authorization': False
         }
-        
         try:
             for line in headers_text.split('\n'):
                 line = line.strip()
-                
                 if line.lower().startswith('cookie:'):
                     cookie_value = line[7:].strip()
                     user_info['cookie'] = cookie_value[:255]
                     user_info['has_cookie'] = True
-                    
-                    # Extract username from cookie
                     for part in cookie_value.split(';'):
                         part = part.strip()
                         if '=' in part:
@@ -459,437 +557,346 @@ class IntegratedSniffer:
                                 user_info['username'] = val[:63]
                                 user_info['has_username'] = True
                                 break
-                
                 elif line.lower().startswith('authorization:'):
                     auth_value = line[14:].strip()
                     user_info['authorization'] = auth_value[:127]
                     user_info['has_authorization'] = True
-                    
                     if auth_value.lower().startswith('basic '):
                         try:
                             import base64
-                            encoded = auth_value[6:]
-                            decoded = base64.b64decode(encoded).decode('utf-8', errors='ignore')
+                            decoded = base64.b64decode(auth_value[6:]).decode('utf-8', 'ignore')
                             if ':' in decoded:
                                 username = decoded.split(':')[0]
                                 user_info['username'] = username[:63]
                                 user_info['has_username'] = True
-                        except:
-                            pass
-                
+                        except: pass
                 elif not user_info['has_username']:
                     if line.lower().startswith('x-user:') or line.lower().startswith('x-username:'):
                         colon_pos = line.find(':')
                         if colon_pos > 0:
-                            username = line[colon_pos+1:].strip()
-                            user_info['username'] = username[:63]
+                            user_info['username'] = line[colon_pos+1:].strip()[:63]
                             user_info['has_username'] = True
-        except:
-            pass
-        
+        except: pass
         return user_info
-    
+
     def update_user_history(self, username, request_id, tid, src_ip, src_port):
         """Add request to user's history and display"""
-        if not username:
-            return
-        
+        if not username: return
         try:
             user_history_map = self.bpf.get_table("user_request_history")
-            
-            # Create username key struct
-            username_key = user_history_map.Key()
-            username_key.name = username.encode('utf-8')[:63] + b'\x00'
+            username_key = user_history_map.Key(name=username.encode('utf-8')[:63])
             
             try:
                 history = user_history_map[username_key]
-                request_count = history.request_count
             except KeyError:
-                history = user_history_map.Leaf()
-                history.username = username.encode('utf-8')[:63] + b'\x00'
-                history.request_count = 0
-                request_count = 0
+                history = user_history_map.Leaf(
+                    username=username.encode('utf-8')[:63], request_count=0
+                )
             
-            idx = request_count
+            idx = history.request_count
             if idx >= 100:
-                # Shift array
-                for i in range(99):
-                    history.requests[i] = history.requests[i + 1]
+                for i in range(99): history.requests[i] = history.requests[i + 1]
                 idx = 99
             else:
                 history.request_count += 1
             
-            # Add new request
-            history.requests[idx].request_id = request_id.encode('utf-8')[:63] + b'\x00'
-            history.requests[idx].timestamp_ns = int(time.time() * 1_000_000_000)
+            history.requests[idx].request_id = request_id.encode('utf-8')[:63]
+            history.requests[idx].timestamp_ns = int(time.time_ns())
             history.requests[idx].tid = tid
             history.requests[idx].src_ip = src_ip
             history.requests[idx].src_port = src_port
-            history.last_updated_ns = int(time.time() * 1_000_000_000)
+            history.last_updated_ns = int(time.time_ns())
             
             user_history_map[username_key] = history
-            
-            # Display updated history
             self.display_user_history(username, history)
-            
         except Exception as e:
             print(f"  [⚠] Error updating user history: {e}")
-    
-    def update_resource_tracking(self, request_id, tid):
+
+    def update_resource_tracking(self, request_id, tid, first_ssl_arrival_ns=None):
         """Track resource usage for this request"""
         try:
             tid_to_req_map = self.bpf.get_table("tid_to_request_id")
             resource_map = self.bpf.get_table("request_resources")
             
-            # Create request ID key struct
-            req_id_key = tid_to_req_map.Leaf()
-            req_id_key.id = request_id.encode('utf-8')[:63] + b'\x00'
+            req_id_key_val = tid_to_req_map.Leaf(id=request_id.encode('utf-8')[:63])
+            tid_to_req_map[ctypes.c_uint(tid)] = req_id_key_val
             
-            # Store TID → Request ID
-            tid_key = tid_to_req_map.Key(tid)
-            tid_to_req_map[tid_key] = req_id_key
+            usage = resource_map.Leaf(
+                request_id=request_id.encode('utf-8')[:63],
+                tid=tid,
+                start_time_ns=int(time.time_ns()),
+                cpu_cycles_start=int(time.time_ns()),
+                memory_kb=self._get_tid_memory_kb(tid),
+                is_complete=0,
+                system_overhead_ns=0,
+                thread_lifetime_ns=0
+            )
             
-            # Initialize resource tracking
-            usage = resource_map.Leaf()
-            usage.request_id = request_id.encode('utf-8')[:63] + b'\x00'
-            usage.tid = tid
-            usage.start_time_ns = int(time.time() * 1_000_000_000)
-            usage.cpu_cycles_start = usage.start_time_ns  # Approximation
-            usage.memory_kb = self._get_tid_memory_kb(tid)
-            usage.is_complete = 0
-            
-            # Use struct key for resource map
-            req_key = resource_map.Key()
-            req_key.id = request_id.encode('utf-8')[:63] + b'\x00'
+            req_key = resource_map.Key(id=request_id.encode('utf-8')[:63])
             resource_map[req_key] = usage
-            
         except Exception as e:
             print(f"  [⚠] Error tracking resources: {e}")
-    
-    def complete_resource_tracking(self, request_id):
+
+    def complete_resource_tracking(self, request_id, first_ssl_arrival_ns=None):
         """Mark request as complete and calculate final metrics"""
         try:
             resource_map = self.bpf.get_table("request_resources")
-            
-            # Create request ID key struct
-            req_key = resource_map.Key()
-            req_key.id = request_id.encode('utf-8')[:63] + b'\x00'
-            
+            req_key = resource_map.Key(id=request_id.encode('utf-8')[:63])
             usage = resource_map[req_key]
-            usage.end_time_ns = int(time.time() * 1_000_000_000)
-            usage.cpu_cycles_end = usage.end_time_ns
+
+            completion_time_ns = int(time.time_ns())
+            usage.end_time_ns = completion_time_ns
             usage.duration_ns = usage.end_time_ns - usage.start_time_ns
+            usage.cpu_cycles_end = usage.end_time_ns
             usage.cpu_cycles_used = usage.cpu_cycles_end - usage.cpu_cycles_start
-            # Refresh memory usage at completion
+
+            # =========================================================================
+            # MODIFIED: Fetch actual probe overhead from BPF map. This is the core fix.
+            # =========================================================================
+            try:
+                overhead_map = self.bpf.get_table("tid_to_overhead_ns")
+                usage.system_overhead_ns = overhead_map[ctypes.c_uint(usage.tid)].value
+            except KeyError:
+                usage.system_overhead_ns = 0
+
+            # Restore original logic for thread lifetime
+            try:
+                thread_start_map = self.bpf.get_table("tid_to_thread_start")
+                thread_start_ns = thread_start_map[ctypes.c_uint(usage.tid)].value
+                # Only update if BPF exit probe hasn't set the final value
+                if usage.thread_lifetime_ns == 0:
+                    usage.thread_lifetime_ns = completion_time_ns - thread_start_ns
+            except KeyError:
+                if usage.thread_lifetime_ns == 0:
+                    usage.thread_lifetime_ns = usage.duration_ns
+            
             usage.memory_kb = max(usage.memory_kb, self._get_tid_memory_kb(usage.tid))
             usage.is_complete = 1
-            
             resource_map[req_key] = usage
-            
-            # Display resource usage
+
+            # Display updated resource usage
             duration_ms = usage.duration_ns / 1_000_000.0
+            lifetime_ms = usage.thread_lifetime_ns / 1_000_000.0
             print(f"  [⏱] Resource Usage for {request_id}:")
-            print(f"      Duration: {duration_ms:.2f} ms")
-            print(f"      CPU Cycles: {usage.cpu_cycles_used:,}")
+            print(f"      Userspace Duration: {duration_ms:.2f} ms")
             if usage.memory_kb:
-                print(f"      Memory: {usage.memory_kb} KB")
-            
+                print(f"      Memory Usage: {usage.memory_kb} KB")
+            # print(f"      Thread Lifetime (Est.): {lifetime_ms:.2f} ms")
+            print(f"      Total eBPF Probe Overhead: {usage.system_overhead_ns:,} ns")
+
+        except KeyError:
+            pass # Request might not be tracked if it started before the sniffer
         except Exception as e:
-            pass  # Request might not be tracked
+            print(f"  [⚠] Error completing resource tracking: {e}")
+
 
     def _get_tid_memory_kb(self, tid):
         """Return VmRSS (kB) for a given thread id by reading /proc."""
         try:
-            pid = os.getpid()
-            status_path = f"/proc/{pid}/task/{tid}/status"
-            with open(status_path, 'r') as f:
+            with open(f"/proc/{os.getpid()}/task/{tid}/status", 'r') as f:
                 for line in f:
                     if line.startswith('VmRSS:'):
-                        parts = line.split()
-                        if len(parts) >= 2:
-                            return int(parts[1])  # already in kB
+                        return int(line.split()[1])
         except Exception:
             return 0
         return 0
-    
+
     def display_user_history(self, username, history):
-        """Display complete request history for a user"""
-        print("\n" + "╔" + "═" * 78 + "╗")
-        print(f"║ 👤 USER: {username:67} ║")
-        print("╠" + "═" * 78 + "╣")
+        """Display complete request history for a user in a formatted table."""
+        print(f"\n--- User History for: {username} ---")
         
-        count = history.request_count
-        print(f"║ Total Requests: {count:63} ║")
-        print("╠" + "═" * 78 + "╣")
+        header = f"| {'#':<3} | {'Request ID':<20} | {'Time':<8} | {'Thread':<7} | {'Source IP:Port':<21} | {'Overhead (ns)':>15} | {'Thread Lifetime (ms)':>22} |"
+        separator = '+' + '-' * 5 + '+' + '-' * 22 + '+' + '-' * 10 + '+' + '-' * 9 + '+' + '-' * 23 + '+' + '-' * 17 + '+' + '-' * 24 + '+'
         
-        if count == 0:
-            print("║ No requests yet" + " " * 62 + "║")
+        print(separator)
+        print(header)
+        print(separator)
+        
+        if history.request_count == 0:
+            print(f"| {'No requests yet.':<122} |")
         else:
-            print("║ #  │ Request ID          │ Time     │ Thread  │ Source IP:Port      ║")
-            print("╠" + "═" * 78 + "╣")
-            
-            for i in range(min(count, 100)):
+            resource_map = self.bpf.get_table("request_resources")
+            for i in range(history.request_count):
                 req_entry = history.requests[i]
-                req_id = req_entry.request_id.decode('utf-8', errors='ignore').rstrip('\x00')
+                req_id = req_entry.request_id.decode('utf-8', 'ignore').rstrip('\x00')
+                if not req_id: continue
                 
-                if not req_id:
-                    continue
-                
-                ts_sec = req_entry.timestamp_ns / 1_000_000_000
-                time_str = time.strftime('%H:%M:%S', time.localtime(ts_sec))
+                time_str = time.strftime('%H:%M:%S', time.localtime(req_entry.timestamp_ns / 1e9))
                 src_ip_str = self.ip_to_str(req_entry.src_ip)
+                source_str = f"{src_ip_str}:{req_entry.src_port}"
+
+                overhead_ns = 0
+                lifetime_ms = 0.0
+                try:
+                    req_key = resource_map.Key(id=req_id.encode('utf-8')[:63])
+                    usage = resource_map[req_key]
+                    overhead_ns = usage.system_overhead_ns
+                    lifetime_ms = usage.thread_lifetime_ns / 1_000_000.0
+                except KeyError:
+                    pass
                 
-                print(f"║ {i+1:2} │ {req_id:19} │ {time_str} │ {req_entry.tid:7} │ {src_ip_str:15}:{req_entry.src_port:5} ║")
-        
-        print("╚" + "═" * 78 + "╝\n")
-    
+                print(f"| {i+1:<3} | {req_id:<20} | {time_str:<8} | {req_entry.tid:<7} | {source_str:<21} | {overhead_ns:>15,d} | {lifetime_ms:>22.2f} |")
+
+        print(separator)
+        print()
+
     def handle_ssl_event(self, cpu, data, size):
         """Process SSL events"""
         event = self.bpf["ssl_events"].event(data)
         tid = event.tid
-        data_bytes = bytes(event.data[:event.data_len])
         
         if tid not in self.request_buffers:
             self.request_buffers[tid] = {
-                'data': b'',
-                'pid': event.pid,
-                'tid': tid,
+                'data': b'', 'pid': event.pid, 'tid': tid,
                 'comm': event.comm.decode('utf-8', 'ignore'),
-                'has_conn_info': event.has_conn_info,
-                'src_ip': event.src_ip,
-                'dst_ip': event.dst_ip,
-                'src_port': event.src_port,
-                'dst_port': event.dst_port,
-                'timestamp': time.time(),
-                'start_time': time.time()
+                'has_conn_info': event.has_conn_info, 'src_ip': event.src_ip,
+                'dst_ip': event.dst_ip, 'src_port': event.src_port, 'dst_port': event.dst_port,
+                'timestamp': time.time(), 'start_time': time.time()
             }
         
-        self.request_buffers[tid]['data'] += data_bytes
+        self.request_buffers[tid]['data'] += bytes(event.data[:event.data_len])
         
         if event.has_conn_info:
-            self.request_buffers[tid]['has_conn_info'] = True
-            self.request_buffers[tid]['src_ip'] = event.src_ip
-            self.request_buffers[tid]['dst_ip'] = event.dst_ip
-            self.request_buffers[tid]['src_port'] = event.src_port
-            self.request_buffers[tid]['dst_port'] = event.dst_port
+            self.request_buffers[tid].update({
+                'has_conn_info': True, 'src_ip': event.src_ip, 'dst_ip': event.dst_ip,
+                'src_port': event.src_port, 'dst_port': event.dst_port
+            })
         
         full_data = self.request_buffers[tid]['data']
         if b'\r\n\r\n' in full_data or b'\n\n' in full_data:
-            if (full_data.startswith(b'GET') or full_data.startswith(b'POST') or
-                full_data.startswith(b'PUT') or full_data.startswith(b'DELETE') or
-                full_data.startswith(b'HEAD') or full_data.startswith(b'OPTIONS') or
-                full_data.startswith(b'PATCH')):
-                
+            if full_data.startswith((b'GET', b'POST', b'PUT', b'DELETE', b'HEAD', b'OPTIONS', b'PATCH')):
                 self.display_complete_request(tid)
-            
             del self.request_buffers[tid]
         
-        # Cleanup
         now = time.time()
         if now - self.last_cleanup > 5:
             self.last_cleanup = now
-            expired = [t for t, req in self.request_buffers.items()
-                      if now - req['timestamp'] > 5]
-            for t in expired:
+            for t in [t for t, req in self.request_buffers.items() if now - req['timestamp'] > 5]:
                 del self.request_buffers[t]
-    
+
     def display_complete_request(self, tid):
         """Display complete request with all tracking info"""
         req = self.request_buffers[tid]
         
-        print("\n" + "=" * 80)
-        print("[HTTPS REQUEST INTERCEPTED]")
-        print("=" * 80)
-        print(f"Process ID (PID):        {req['pid']}")
-        print(f"Thread ID (TID):         {req['tid']}")
-        print(f"Process Name:            {req['comm']}")
+        print("\n" + "="*80)
+        print("HTTPS REQUEST INTERCEPTED".center(80))
+        print("="*80)
+        print(f"  {'Process:':<12} {req['comm']} (PID: {req['pid']}, TID: {req['tid']})")
         
-        # Connection info
         if req['has_conn_info']:
-            src_ip = self.ip_to_str(req['src_ip'])
-            dst_ip = self.ip_to_str(req['dst_ip'])
-            print(f"\nConnection 4-tuple:")
-            print(f"  Source:      {src_ip}:{req['src_port']} (client)")
-            print(f"  Destination: {dst_ip}:{req['dst_port']} (server)")
-        else:
-            print(f"\nConnection Info: [Not available]")
+            src = f"{self.ip_to_str(req['src_ip'])}:{req['src_port']}"
+            dst = f"{self.ip_to_str(req['dst_ip'])}:{req['dst_port']}"
+            print(f"  {'Connection:':<12} {src} -> {dst}")
         
-        # HTTP headers
         headers = self.parse_http_headers(req['data'])
-        print(f"\nHTTP Request Headers:")
-        print("-" * 80)
-        print(headers)
-        print("-" * 80)
-        
-        # Extract request ID
         request_id = self.extract_request_id(headers)
-        print(f"\n📝 Request ID: {request_id}")
-        
-        # Extract user info
         user_info = self.extract_user_info(headers)
+
+        print(f"  {'Request ID:':<12} {request_id}")
+        if user_info['has_username']:
+            print(f"  {'User:':<12} {user_info['username']}")
         
-        if user_info['has_username'] or user_info['has_cookie'] or user_info['has_authorization']:
-            print(f"\n👤 User Information:")
-            print("-" * 80)
-            if user_info['has_username']:
-                print(f"  Username:      {user_info['username']}")
-            if user_info['has_cookie']:
-                print(f"  Cookie:        {user_info['cookie']}")
-            if user_info['has_authorization']:
-                print(f"  Authorization: {user_info['authorization']}")
-            print("-" * 80)
-            
-            # Update tid_to_user_info map
-            self.update_user_info_map(tid, user_info)
-            
-            # Update user request history
-            if user_info['has_username'] and req['has_conn_info']:
-                self.update_user_history(
-                    user_info['username'],
-                    request_id,
-                    tid,
-                    req['src_ip'],
-                    req['src_port']
-                )
+        print("-" * 80)
+        print(headers.strip())
+        print("-" * 80)
         
-        # Resource tracking
+        if user_info['has_username'] and req['has_conn_info']:
+            self.update_user_history(
+                user_info['username'], request_id, tid, req['src_ip'], req['src_port']
+            )
+        
         self.update_resource_tracking(request_id, tid)
-        
-        # Mark as complete
-        duration = time.time() - req['start_time']
-        print(f"\n⏱ Processing Time: {duration*1000:.2f} ms")
-        
         self.complete_resource_tracking(request_id)
-        
         print()
-    
-    def update_user_info_map(self, tid, user_info):
-        """Update tid_to_user_info BPF map"""
-        try:
-            user_info_map = self.bpf.get_table("tid_to_user_info")
-            info_struct = user_info_map.Leaf()
-            
-            if user_info['has_username']:
-                info_struct.username = user_info['username'].encode('utf-8')[:63] + b'\x00'
-                info_struct.has_username = 1
-            
-            if user_info['has_cookie']:
-                info_struct.cookie = user_info['cookie'].encode('utf-8')[:255] + b'\x00'
-                info_struct.has_cookie = 1
-            
-            if user_info['has_authorization']:
-                info_struct.authorization = user_info['authorization'].encode('utf-8')[:127] + b'\x00'
-                info_struct.has_authorization = 1
-            
-            tid_key = user_info_map.Key(tid)
-            user_info_map[tid_key] = info_struct
-            
-        except Exception as e:
-            print(f"  [⚠] Could not update user info map: {e}")
-    
+
     def display_all_summaries(self):
         """Display all tracking summaries on exit"""
         self.display_resource_summary()
-        self.display_user_histories()
-    
+        self.display_user_histories(summary_mode=True)
+
     def display_resource_summary(self):
-        """Display resource usage summary"""
-        print("\n" + "=" * 80)
-        print("📊 RESOURCE USAGE SUMMARY")
-        print("=" * 80)
+        """Display resource usage summary in a formatted table."""
+        print("\n" + "="*80)
+        print("📊 RESOURCE USAGE SUMMARY".center(80))
+        print("="*80)
         
         try:
             resource_map = self.bpf.get_table("request_resources")
+            if not resource_map:
+                print("No resource data tracked.")
+                return
+
+            header = f"| {'Request ID':<20} | {'Duration (ms)':>15} | {'Overhead (ns)':>15} | {'Lifetime (ms)':>15} | {'Memory (KB)':>12} | {'Status':<10} |"
+            separator = '+' + '-'*22 + '+' + '-'*17 + '+' + '-'*17 + '+' + '-'*17 + '+' + '-'*14 + '+' + '-'*12 + '+'
             
-            if len(resource_map) == 0:
-                print("  No resource data tracked.")
-            else:
-                print(f"  Total requests tracked: {len(resource_map)}\n")
-                print(f"  {'Request ID':<20} │ {'Duration':<12} │ {'CPU Cycles':<15} │ {'Memory':<10} │ {'Status':<10}")
-                print("  " + "-" * 90)
+            print(separator)
+            print(header)
+            print(separator)
+            
+            for req_id_key, usage in sorted(resource_map.items(), key=lambda item: item[1].start_time_ns):
+                req_id = req_id_key.id.decode('utf-8', 'ignore').rstrip('\x00')
+                if not req_id: continue
                 
-                for req_id_key, usage in resource_map.items():
-                    request_id = req_id_key.id.decode('utf-8', errors='ignore').rstrip('\x00')
-                    if not request_id:
-                        continue
-                    
-                    duration_ms = usage.duration_ns / 1_000_000.0 if usage.duration_ns > 0 else 0
-                    status = "Complete" if usage.is_complete else "In Progress"
-                    mem_str = f"{usage.memory_kb} KB" if usage.memory_kb else "-"
-                    
-                    print(f"  {request_id:<20} │ {duration_ms:>10.2f} ms │ {usage.cpu_cycles_used:>13,} │ {mem_str:>10} │ {status:<10}")
+                duration_ms = usage.duration_ns / 1e6
+                overhead_ns = usage.system_overhead_ns
+                lifetime_ms = usage.thread_lifetime_ns / 1e6
+                status = "Complete" if usage.is_complete else "In-Flight"
+                mem_kb = usage.memory_kb if usage.memory_kb else 0
+
+                print(f"| {req_id:<20} | {duration_ms:>15.2f} | {overhead_ns:>15,d} | {lifetime_ms:>15.2f} | {mem_kb:>12,d} | {status:<10} |")
+
+            print(separator)
         except Exception as e:
-            print(f"  Error: {e}")
+            print(f"  Error displaying resource summary: {e}")
+
+    def display_user_histories(self, summary_mode=False):
+        """Display all user request histories."""
+        if not summary_mode: return # This is now handled live
         
-        print("=" * 80)
-    
-    def display_user_histories(self):
-        """Display all user request histories"""
-        print("\n" + "=" * 80)
-        print("👥 USER REQUEST HISTORIES")
-        print("=" * 80)
+        print("\n" + "="*80)
+        print("👥 ALL USER HISTORIES".center(80))
+        print("="*80)
         
         try:
             user_history_map = self.bpf.get_table("user_request_history")
-            
-            if len(user_history_map) == 0:
-                print("  No user histories tracked.")
+            if not user_history_map:
+                print("No user histories tracked.")
             else:
-                print(f"  Total users tracked: {len(user_history_map)}\n")
-                
                 for username_key, history in user_history_map.items():
-                    username = username_key.name.decode('utf-8', errors='ignore').rstrip('\x00')
+                    username = username_key.name.decode('utf-8', 'ignore').rstrip('\x00')
                     if username:
                         self.display_user_history(username, history)
         except Exception as e:
-            print(f"  Error: {e}")
-        
-        print("=" * 80)
-    
+            print(f"  Error displaying user histories: {e}")
+
     def run(self):
         """Main execution"""
-        print("=" * 80)
-        print("🔍 Integrated HTTPS Server Sniffer")
-        print("=" * 80)
-        print("Features:")
-        print("  ✓ Connection attribution (TID → FD → Connection)")
-        print("  ✓ User information extraction")
-        print("  ✓ Resource usage tracking per request")
-        print("  ✓ User request history tracking")
-        print("=" * 80)
-        print("\nInitializing eBPF probes...\n")
+        print("="*80)
+        print("🔍 Integrated HTTPS Server Sniffer".center(80))
+        print("="*80)
+        print("Initializing eBPF probes... (This may take a moment)")
         
         try:
             self.bpf = BPF(text=BPF_PROGRAM)
-            
-            ssl_lib = "/usr/lib/libssl.so.3"
-            
-            try:
-                self.bpf.attach_uprobe(name=ssl_lib, sym="SSL_read",
-                                      fn_name="probe_ssl_read_enter")
-                self.bpf.attach_uretprobe(name=ssl_lib, sym="SSL_read",
-                                         fn_name="probe_ssl_read_exit")
-                print(f"✓ Attached to SSL_read")
-            except Exception as e:
-                print(f"⚠ Could not attach to SSL_read: {e}")
+            ssl_lib_path = BPF.find_library("ssl") or "/usr/lib/libssl.so.3"
+            print(f"Found SSL library at: {ssl_lib_path}")
+
+            self.bpf.attach_uprobe(name=ssl_lib_path, sym="SSL_read", fn_name="probe_ssl_read_enter")
+            self.bpf.attach_uretprobe(name=ssl_lib_path, sym="SSL_read", fn_name="probe_ssl_read_exit")
+            print("✓ Attached to SSL_read")
             
             try:
-                self.bpf.attach_uprobe(name=ssl_lib, sym="SSL_read_ex",
-                                      fn_name="probe_ssl_read_ex_enter")
-                self.bpf.attach_uretprobe(name=ssl_lib, sym="SSL_read_ex",
-                                         fn_name="probe_ssl_read_ex_exit")
-                print(f"✓ Attached to SSL_read_ex")
-            except Exception as e:
-                print(f"⚠ Could not attach to SSL_read_ex: {e}")
+                self.bpf.attach_uprobe(name=ssl_lib_path, sym="SSL_read_ex", fn_name="probe_ssl_read_ex_enter")
+                self.bpf.attach_uretprobe(name=ssl_lib_path, sym="SSL_read_ex", fn_name="probe_ssl_read_ex_exit")
+                print("✓ Attached to SSL_read_ex")
+            except Exception:
+                print("ℹ SSL_read_ex not found, skipping.")
             
-            print("\n" + "=" * 80)
-            print("🎯 Monitoring HTTPS traffic...")
-            print("   All features active: connection, user info, resources, history")
-            print("=" * 80)
-            print()
+            print("\n" + "="*80)
+            print("🎯 Monitoring HTTPS traffic... Press Ctrl+C to stop.".center(80))
+            print("="*80)
             
             self.bpf["ssl_events"].open_perf_buffer(self.handle_ssl_event)
-            
             while True:
                 try:
                     self.bpf.perf_buffer_poll(timeout=100)
@@ -897,21 +904,30 @@ class IntegratedSniffer:
                     print("\n\n🛑 Stopping sniffer...")
                     self.display_all_summaries()
                     break
-                    
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"\n[ERROR] Failed to initialize eBPF program: {e}")
             import traceback
             traceback.print_exc()
 
-
 if __name__ == "__main__":
-    import os
-    
     if os.geteuid() != 0:
         print("This program must be run as root!")
-        print("Usage: sudo python3 integrated_sniffer.py")
         exit(1)
-    
     sniffer = IntegratedSniffer()
     sniffer.run()
 
+
+
+"""
+CFA:
+per request:
+1.Memory usage: extract memory usage from sbrk, brk and mmap calls(stack light)
+==>follow mmap calls with such signature(flags):[pid 55294] mmap(NULL, 104861696, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f0617ffe000
+==> and also mprotect(NONE->RW)
+2. N/w usage: number of bytes sent, received for the request and number of send/receive calls made. 
+3. CPU usage: number of CPU cycles used by the request along with the exact time run.
+4. Disk I/O: number of read and write calls made by the request and also the number of bytes read and written.
+5. Latency numbers: Start small with user space requests which take 1-5 mins to return response and try to approximate that using Thread lifetime and see if that matches.
+    ==>Also get better look into added latency numbers of our system(Test this by adding delays of 1-5 mins in ebpf programs.)
+Then move onto service flow attribution.
+"""

@@ -54,6 +54,12 @@ class ThreadInfoHandler(http.server.SimpleHTTPRequestHandler):
                 if param.startswith('id='):
                     request_id = param.split('=')[1]
         
+        # Test Memory Usage: Allocate 100 MB
+        # We assign it to a variable to keep it in scope during the sleep
+        print(f"  [MEMORY] Allocating 100 MB string...")
+        mem_hog = "A" * (100 * 1024 * 1024)
+        print(f"  [MEMORY] Allocated 100 MB. Length: {len(mem_hog)}")
+
         # Random delay if enabled (for stress testing)
         if ENABLE_RANDOM_DELAY:
             delay = random.uniform(MIN_DELAY, MAX_DELAY)
@@ -67,6 +73,7 @@ class ThreadInfoHandler(http.server.SimpleHTTPRequestHandler):
         response = f"<h1>Request {request_id} processed</h1>\n"
         response += f"<p>PID: {os.getpid()}, TID: {get_kernel_tid()}</p>\n"
         response += f"<p>Client: {self.client_address[0]}:{self.client_address[1]}</p>\n"
+        response += f"<p>Memory Allocated: 100 MB</p>\n"
         self.wfile.write(response.encode())
 
 # --- A ThreadingTCPServer to handle each request in a new thread ---
