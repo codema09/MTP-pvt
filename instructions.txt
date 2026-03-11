@@ -1,0 +1,24 @@
+In separate terminals:
+
+1.First run python SERVER/loopback_server.py
+2.Then run cd SERVER && python mem-tester-server.py
+        
+        SAMPLE OUTPUT:
+    
+        ======================================================================
+        🔒 DEFINITIVE HTTPS SERVER STARTED
+        ======================================================================
+        Server PID:               53265
+        Listening on:             https://localhost:8443
+        ======================================================================
+        Ready to be traced by 'server-sniffer.py'. Waiting for connections...
+        ======================================================================
+
+
+
+3.Run sudo python src/new-architecture-USC.py -p <PID>(PID is of the server in second step, look at the terminal to get this,like 53265 in the sample output)
+4.Run python tests/concurrent-test-all-features.sh
+
+
+====> 3rd terminal shows all the logs collected.Stop this program to see the final results in a table.
+====> src/memory_debug.log shows the physical memory usage logs of the server.

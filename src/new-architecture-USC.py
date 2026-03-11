@@ -1,547 +1,113 @@
-
 #!/usr/bin/env python3
 """
-Integrated HTTPS Server Sniffer
-================================
-Combines all tracking features:
-1. Connection attribution (TID → FD → Connection)
-2. User information extraction (username, cookie, authorization)
-3. Resource usage tracking (CPU, memory, time per request)
-4. User request history (all requests per user)
+Integrated HTTPS Server Sniffer & Resource Profiler (FINAL FIXED + IO + Disk + CPU Burst/Cycles)
+==============================================================================================
+- Added: CPU Burst Tracking (Avg Duration, Count, Total Duration).
+- Added: CPU Cycle Tracking (Avg Cycles, Total Cycles).
+- Maintained: Original Table layouts are untouched.
+- Maintained: All previous IO/Disk/Memory tracking.
 
-Usage: sudo python3 integrated_sniffer.py
+Usage: sudo python3 integrated_sniffer_full.py -p <PID>
 """
 
-from bcc import BPF
+from bcc import BPF, PerfType, PerfHWConfig
 import socket
 import struct
 import ctypes
 import time
 import re
 import os
+import sys
+import argparse
+from datetime import datetime
 
-# Combined eBPF Program (No changes needed here, included for completeness)
-BPF_PROGRAM = """
-#include <uapi/linux/ptrace.h>
-#include <net/sock.h>
-#include <net/inet_sock.h>
-#include <linux/sched.h>
-#include <linux/fdtable.h>
-#include <linux/fs.h>
-#include <linux/socket.h>
-#include <linux/net.h>
+# ═══════════════════════════════════════════════════════════════
+# CONFIGURATION
+# ═══════════════════════════════════════════════════════════════
 
-#define MAX_HEADER_SIZE 1024
-#define MAX_USERNAME_LEN 64
-#define MAX_COOKIE_LEN 256
-#define MAX_AUTH_LEN 128
-#define MAX_REQUEST_ID_LEN 64
-#define MAX_REQUESTS_PER_USER 100
+LOG_FILENAME = "memory_debug.log"
 
-// ═══════════════════════════════════════════════════════════════
-// DATA STRUCTURES
-// ═══════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════
+# BPF PROGRAM LOADER
+# ═══════════════════════════════════════════════════════════════
 
-// Connection 4-tuple
-struct conn_tuple_t {
-    u32 src_ip;
-    u32 dst_ip;
-    u16 src_port;
-    u16 dst_port;
-};
+# Directory containing the modular eBPF source files (relative to this script)
+EBPF_SRC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ebpf")
 
-// Key structures (struct wrappers for arrays)
-struct request_id_key_t {
-    char id[MAX_REQUEST_ID_LEN];
-};
+# Files are loaded in dependency order: headers first, then implementations
+BPF_SOURCE_FILES = [
+    # Headers (order matters: common -> maps -> helpers)
+    "include/common.h",
+    "include/maps.h",
+    "include/helpers.h",
+    # Tracepoints & Uprobes
+    "tracepoints/cpu_tracking.c",
+    "tracepoints/io_tracking.c",
+    "uprobes/ssl_interception.c",
+    "tracepoints/lifecycle.c",
+    "tracepoints/memory_tracking.c",
+]
 
-struct username_key_t {
-    char name[MAX_USERNAME_LEN];
-};
+def load_bpf_program(target_pid, num_cpus):
+    """Read all eBPF source files, concatenate, and substitute runtime values."""
+    parts = []
+    for relpath in BPF_SOURCE_FILES:
+        filepath = os.path.join(EBPF_SRC_DIR, relpath)
+        with open(filepath, "r") as f:
+            parts.append(f"// === {relpath} ===\n")
+            parts.append(f.read())
+            parts.append("\n")
+    
+    program = "".join(parts)
+    program = program.replace("__TARGET_PID__", str(target_pid))
+    program = program.replace("__NUM_CPUS__", str(num_cpus))
+    return program
 
-// User information from HTTP headers
-struct user_info_t {
-    char username[MAX_USERNAME_LEN];
-    char cookie[MAX_COOKIE_LEN];
-    char authorization[MAX_AUTH_LEN];
-    u8 has_username;
-    u8 has_cookie;
-    u8 has_authorization;
-};
 
-// Resource usage per request
-struct resource_usage_t {
-    char request_id[MAX_REQUEST_ID_LEN];
-    u32 tid;
-    u64 start_time_ns;
-    u64 end_time_ns;
-    u64 duration_ns;
-    u64 cpu_cycles_start;
-    u64 cpu_cycles_end;
-    u64 cpu_cycles_used;
-    u32 memory_kb;            // Resident memory (approx., userspace filled)
-    u64 system_overhead_ns;    // Time spent in our eBPF/userspace tracking
-    u64 thread_lifetime_ns;    // Estimated lifetime of thread processing this request
-    u8 is_complete;
-};
-
-// Single request entry in user history
-struct request_entry_t {
-    char request_id[MAX_REQUEST_ID_LEN];
-    u64 timestamp_ns;
-    u32 tid;
-    u32 src_ip;
-    u16 src_port;
-};
-
-// User request history
-struct user_history_t {
-    char username[MAX_USERNAME_LEN];
-    struct request_entry_t requests[MAX_REQUESTS_PER_USER];
-    u32 request_count;
-    u64 last_updated_ns;
-};
-
-// Event sent to userspace
-struct ssl_data_event_t {
-    u32 pid;
-    u32 tid;
-    char comm[TASK_COMM_LEN];
-    u32 src_ip;
-    u32 dst_ip;
-    u16 src_port;
-    u16 dst_port;
-    u32 data_len;
-    char data[MAX_HEADER_SIZE];
-    u8 has_conn_info;
-};
-
-// ═══════════════════════════════════════════════════════════════
-// PRIMARY MAPS
-// ═══════════════════════════════════════════════════════════════
-
-// 1. Connection attribution
-BPF_HASH(fd_to_conn, u32, struct conn_tuple_t);
-BPF_HASH(tid_to_fd, u64, u32);
-
-// 2. User information
-BPF_HASH(tid_to_user_info, u32, struct user_info_t);
-
-// 3. Resource tracking
-BPF_HASH(request_resources, struct request_id_key_t, struct resource_usage_t);
-BPF_HASH(tid_to_request_id, u32, struct request_id_key_t);
-BPF_HASH(tid_to_thread_start, u32, u64);  // Track when thread first starts processing (first recv/read)
-// Per-TID cumulative overhead incurred by our probes (in ns)
-BPF_HASH(tid_to_overhead_ns, u32, u64);
-
-// 4. User request history
-BPF_HASH(user_request_history, struct username_key_t, struct user_history_t);
-
-// Output channel
-BPF_PERF_OUTPUT(ssl_events);
-
-// Temporary storage
-BPF_HASH(ssl_read_args, u64, void *);
-BPF_PERCPU_ARRAY(event_scratch, struct ssl_data_event_t, 1);
-
-// ═══════════════════════════════════════════════════════════════
-// HELPER: Get socket from FD
-// ═══════════════════════════════════════════════════════════════
-
-static struct sock* get_sock_from_fd(u32 fd) {
-    struct task_struct *task = (struct task_struct *)bpf_get_current_task();
-    
-    struct files_struct *files = task->files;
-    if (files == NULL) return NULL;
-    
-    struct fdtable *fdt = files->fdt;
-    if (fdt == NULL) return NULL;
-    
-    if (fd >= fdt->max_fds) return NULL;
-    
-    struct file **fd_array;
-    bpf_probe_read_kernel(&fd_array, sizeof(fd_array), &fdt->fd);
-    
-    struct file *file;
-    bpf_probe_read_kernel(&file, sizeof(file), &fd_array[fd]);
-    if (file == NULL) return NULL;
-    
-    struct socket *sock_obj;
-    bpf_probe_read_kernel(&sock_obj, sizeof(sock_obj), &file->private_data);
-    if (sock_obj == NULL) return NULL;
-    
-    struct sock *sk;
-    bpf_probe_read_kernel(&sk, sizeof(sk), &sock_obj->sk);
-    
-    return sk;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// CONNECTION TRACKING: First recv() establishes FD→Connection
-// ═══════════════════════════════════════════════════════════════
-
-TRACEPOINT_PROBE(syscalls, sys_enter_recvfrom) {
-    u64 pid_tgid = bpf_get_current_pid_tgid();
-    u32 fd = (u32)args->fd;
-    u64 t0 = bpf_ktime_get_ns();
-    
-    // ALWAYS recompute connection tuple for this FD to avoid stale cache
-    struct sock *sk = get_sock_from_fd(fd);
-    if (sk == NULL) return 0;
-    
-    u16 family;
-    bpf_probe_read_kernel(&family, sizeof(family), &sk->__sk_common.skc_family);
-    if (family != AF_INET) return 0;
-    
-    struct conn_tuple_t conn = {};
-    // Prefer inet_sock fields for reliability across kernels
-    struct inet_sock *inet = (struct inet_sock *)sk;
-    u16 sport_be = 0, dport_be = 0;
-    bpf_probe_read_kernel(&conn.src_ip, sizeof(u32), &inet->inet_daddr);      // client IP
-    bpf_probe_read_kernel(&conn.dst_ip, sizeof(u32), &inet->inet_rcv_saddr);  // server IP
-    bpf_probe_read_kernel(&sport_be, sizeof(u16), &inet->inet_sport);         // local/server port
-    bpf_probe_read_kernel(&dport_be, sizeof(u16), &inet->inet_dport);         // remote/client port
-    conn.src_port = bpf_ntohs(dport_be);  // client port
-    conn.dst_port = bpf_ntohs(sport_be);  // server port
-    
-    // Update cache on every recv/read; FD numbers can be reused
-    fd_to_conn.update(&fd, &conn);
-    tid_to_fd.update(&pid_tgid, &fd);
-    
-    // Track thread start time (first time we see this TID processing)
-    u32 tid = (u32)pid_tgid;
-    u64 *existing_start = tid_to_thread_start.lookup(&tid);
-    if (existing_start == NULL) {
-        u64 start_time = bpf_ktime_get_ns();
-        tid_to_thread_start.update(&tid, &start_time);
-    }
-    
-    // Accumulate probe overhead for this TID
-    u32 tid_acc = (u32)pid_tgid;
-    u64 t1 = bpf_ktime_get_ns();
-    u64 delta = t1 - t0;
-    u64 *acc_ptr = tid_to_overhead_ns.lookup(&tid_acc);
-    if (acc_ptr) {
-        u64 acc = *acc_ptr + delta;
-        tid_to_overhead_ns.update(&tid_acc, &acc);
-    } else {
-        tid_to_overhead_ns.update(&tid_acc, &delta);
-    }
-    return 0;
-}
-
-TRACEPOINT_PROBE(syscalls, sys_enter_read) {
-    u64 pid_tgid = bpf_get_current_pid_tgid();
-    u32 fd = (u32)args->fd;
-    u64 t0 = bpf_ktime_get_ns();
-    
-    // ALWAYS recompute connection tuple for this FD to avoid stale cache
-    struct sock *sk = get_sock_from_fd(fd);
-    if (sk == NULL) return 0;
-    
-    u16 family;
-    bpf_probe_read_kernel(&family, sizeof(family), &sk->__sk_common.skc_family);
-    if (family != AF_INET) return 0;
-    
-    struct conn_tuple_t conn = {};
-    struct inet_sock *inet = (struct inet_sock *)sk;
-    u16 sport_be = 0, dport_be = 0;
-    bpf_probe_read_kernel(&conn.src_ip, sizeof(u32), &inet->inet_daddr);
-    bpf_probe_read_kernel(&conn.dst_ip, sizeof(u32), &inet->inet_rcv_saddr);
-    bpf_probe_read_kernel(&sport_be, sizeof(u16), &inet->inet_sport);
-    bpf_probe_read_kernel(&dport_be, sizeof(u16), &inet->inet_dport);
-    conn.src_port = bpf_ntohs(dport_be);
-    conn.dst_port = bpf_ntohs(sport_be);
-    
-    fd_to_conn.update(&fd, &conn);
-    tid_to_fd.update(&pid_tgid, &fd);
-    
-    // Track thread start time (first time we see this TID processing)
-    u32 tid = (u32)pid_tgid;
-    u64 *existing_start = tid_to_thread_start.lookup(&tid);
-    if (existing_start == NULL) {
-        u64 start_time = bpf_ktime_get_ns();
-        tid_to_thread_start.update(&tid, &start_time);
-    }
-    
-    // Accumulate probe overhead for this TID
-    u32 tid_acc = (u32)pid_tgid;
-    u64 t1 = bpf_ktime_get_ns();
-    u64 delta = t1 - t0;
-    u64 *acc_ptr = tid_to_overhead_ns.lookup(&tid_acc);
-    if (acc_ptr) {
-        u64 acc = *acc_ptr + delta;
-        tid_to_overhead_ns.update(&tid_acc, &acc);
-    } else {
-        tid_to_overhead_ns.update(&tid_acc, &delta);
-    }
-    return 0;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// SSL INTERCEPTION
-// ═══════════════════════════════════════════════════════════════
-
-int probe_ssl_read_enter(struct pt_regs *ctx, void *ssl, void *buf, int num) {
-    u64 pid_tgid = bpf_get_current_pid_tgid();
-    ssl_read_args.update(&pid_tgid, &buf);
-    return 0;
-}
-
-int probe_ssl_read_exit(struct pt_regs *ctx) {
-    u64 t0 = bpf_ktime_get_ns();
-    int ret = PT_REGS_RC(ctx);
-    if (ret <= 0) return 0;
-    
-    u64 pid_tgid = bpf_get_current_pid_tgid();
-    u32 pid = pid_tgid >> 32;
-    u32 tid = (u32)pid_tgid;
-    
-    void **buf_ptr = ssl_read_args.lookup(&pid_tgid);
-    if (buf_ptr == NULL) return 0;
-    void *buf = *buf_ptr;
-    ssl_read_args.delete(&pid_tgid);
-    
-    u32 zero = 0;
-    struct ssl_data_event_t *evt = event_scratch.lookup(&zero);
-    if (evt == NULL) return 0;
-    
-    evt->pid = pid;
-    evt->tid = tid;
-    evt->has_conn_info = 0;
-    evt->src_ip = 0;
-    evt->dst_ip = 0;
-    evt->src_port = 0;
-    evt->dst_port = 0;
-    
-    bpf_get_current_comm(&evt->comm, sizeof(evt->comm));
-    
-    u32 copy_len = (u32)ret;
-    if (copy_len > MAX_HEADER_SIZE) copy_len = MAX_HEADER_SIZE;
-    bpf_probe_read_user(&evt->data, copy_len, buf);
-    evt->data_len = copy_len;
-    
-    // Resolve connection on EVERY SSL read using current FD
-    u32 *fd_ptr = tid_to_fd.lookup(&pid_tgid);
-    if (fd_ptr != NULL) {
-        u32 fd = *fd_ptr;
-        struct sock *sk = get_sock_from_fd(fd);
-        if (sk != NULL) {
-            u16 family;
-            bpf_probe_read_kernel(&family, sizeof(family), &sk->__sk_common.skc_family);
-            if (family == AF_INET) {
-                struct inet_sock *inet = (struct inet_sock *)sk;
-                u16 sport_be = 0, dport_be = 0;
-                bpf_probe_read_kernel(&evt->src_ip, sizeof(u32), &inet->inet_daddr);
-                bpf_probe_read_kernel(&evt->dst_ip, sizeof(u32), &inet->inet_rcv_saddr);
-                bpf_probe_read_kernel(&sport_be, sizeof(u16), &inet->inet_sport);
-                bpf_probe_read_kernel(&dport_be, sizeof(u16), &inet->inet_dport);
-                evt->src_port = bpf_ntohs(dport_be);
-                evt->dst_port = bpf_ntohs(sport_be);
-                evt->has_conn_info = 1;
-            }
-        }
-    }
-    
-    ssl_events.perf_submit(ctx, evt, sizeof(*evt));
-
-    // Accumulate probe overhead for this TID
-    u32 tid_acc = (u32)pid_tgid;
-    u64 t1 = bpf_ktime_get_ns();
-    u64 delta = t1 - t0;
-    u64 *acc_ptr = tid_to_overhead_ns.lookup(&tid_acc);
-    if (acc_ptr) {
-        u64 acc = *acc_ptr + delta;
-        tid_to_overhead_ns.update(&tid_acc, &acc);
-    } else {
-        tid_to_overhead_ns.update(&tid_acc, &delta);
-    }
-    return 0;
-}
-
-// SSL_read_ex support
-struct ssl_read_ex_args_t {
-    void *buf;
-    void *readbytes_ptr;
-};
-
-BPF_HASH(ssl_read_ex_args, u64, struct ssl_read_ex_args_t);
-
-int probe_ssl_read_ex_enter(struct pt_regs *ctx, void *ssl, void *buf,
-                             unsigned long num, void *readbytes) {
-    u64 pid_tgid = bpf_get_current_pid_tgid();
-    struct ssl_read_ex_args_t args = {.buf = buf, .readbytes_ptr = readbytes};
-    ssl_read_ex_args.update(&pid_tgid, &args);
-    return 0;
-}
-
-int probe_ssl_read_ex_exit(struct pt_regs *ctx) {
-    u64 t0 = bpf_ktime_get_ns();
-    int ret = PT_REGS_RC(ctx);
-    if (ret != 1) return 0;
-    
-    u64 pid_tgid = bpf_get_current_pid_tgid();
-    u32 pid = pid_tgid >> 32;
-    u32 tid = (u32)pid_tgid;
-    
-    struct ssl_read_ex_args_t *args = ssl_read_ex_args.lookup(&pid_tgid);
-    if (args == NULL) return 0;
-    
-    unsigned long bytes_read = 0;
-    bpf_probe_read_user(&bytes_read, sizeof(bytes_read), args->readbytes_ptr);
-    if (bytes_read <= 0) {
-        ssl_read_ex_args.delete(&pid_tgid);
-        return 0;
-    }
-    
-    void *buf = args->buf;
-    ssl_read_ex_args.delete(&pid_tgid);
-    
-    u32 zero = 0;
-    struct ssl_data_event_t *evt = event_scratch.lookup(&zero);
-    if (evt == NULL) return 0;
-    
-    evt->pid = pid;
-    evt->tid = tid;
-    evt->has_conn_info = 0;
-    evt->src_ip = 0;
-    evt->dst_ip = 0;
-    evt->src_port = 0;
-    evt->dst_port = 0;
-    
-    bpf_get_current_comm(&evt->comm, sizeof(evt->comm));
-    
-    u32 copy_len = (u32)bytes_read;
-    if (copy_len > MAX_HEADER_SIZE) copy_len = MAX_HEADER_SIZE;
-    bpf_probe_read_user(&evt->data, copy_len, buf);
-    evt->data_len = copy_len;
-    
-    u32 *fd_ptr = tid_to_fd.lookup(&pid_tgid);
-    if (fd_ptr != NULL) {
-        u32 fd = *fd_ptr;
-        struct sock *sk = get_sock_from_fd(fd);
-        if (sk != NULL) {
-            u16 family;
-            bpf_probe_read_kernel(&family, sizeof(family), &sk->__sk_common.skc_family);
-            if (family == AF_INET) {
-                struct inet_sock *inet = (struct inet_sock *)sk;
-                u16 sport_be = 0, dport_be = 0;
-                bpf_probe_read_kernel(&evt->src_ip, sizeof(u32), &inet->inet_daddr);
-                bpf_probe_read_kernel(&evt->dst_ip, sizeof(u32), &inet->inet_rcv_saddr);
-                bpf_probe_read_kernel(&sport_be, sizeof(u16), &inet->inet_sport);
-                bpf_probe_read_kernel(&dport_be, sizeof(u16), &inet->inet_dport);
-                evt->src_port = bpf_ntohs(dport_be);
-                evt->dst_port = bpf_ntohs(sport_be);
-                evt->has_conn_info = 1;
-            }
-        }
-    }
-    
-    ssl_events.perf_submit(ctx, evt, sizeof(*evt));
-
-    // Accumulate probe overhead for this TID
-    u32 tid_acc = (u32)pid_tgid;
-    u64 t1 = bpf_ktime_get_ns();
-    u64 delta = t1 - t0;
-    u64 *acc_ptr = tid_to_overhead_ns.lookup(&tid_acc);
-    if (acc_ptr) {
-        u64 acc = *acc_ptr + delta;
-        tid_to_overhead_ns.update(&tid_acc, &acc);
-    } else {
-        tid_to_overhead_ns.update(&tid_acc, &delta);
-    }
-    return 0;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// THREAD EXIT TRACKING: Update thread lifetime when thread exits
-// ═══════════════════════════════════════════════════════════════
-
-TRACEPOINT_PROBE(sched, sched_process_exit) {
-    // This fires when a process/thread exits
-    // Get the TID (in Linux, threads are processes, so this works for threads too)
-    u64 pid_tgid = bpf_get_current_pid_tgid();
-    u32 tid = (u32)pid_tgid;
-    
-    // Look up thread start time
-    u64 *thread_start_ns = tid_to_thread_start.lookup(&tid);
-    if (thread_start_ns == NULL) return 0;  // Not a thread we're tracking
-    
-    // Get current time (when thread is exiting)
-    u64 exit_time_ns = bpf_ktime_get_ns();
-    
-    // Calculate final thread lifetime
-    u64 lifetime_ns = exit_time_ns - *thread_start_ns;
-    
-    // Find the request associated with this TID
-    struct request_id_key_t *req_id_key = tid_to_request_id.lookup(&tid);
-    if (req_id_key != NULL) {
-        // Update the resource_usage entry with final thread lifetime
-        struct resource_usage_t *usage = request_resources.lookup(req_id_key);
-        if (usage != NULL) {
-            // Update with final thread lifetime (thread has now exited)
-            usage->thread_lifetime_ns = lifetime_ns;
-            // Note: is_complete is managed by userspace resource tracking, not here
-        }
-    }
-    
-    // Clean up thread tracking maps
-    tid_to_thread_start.delete(&tid);
-    tid_to_fd.delete(&pid_tgid);
-    tid_to_overhead_ns.delete(&tid);
-    
-    return 0;
-}
-"""
-
-class IntegratedSniffer:
-    def __init__(self):
+class IntegratedSnifferFull:
+    def __init__(self, pid):
+        self.pid = pid
         self.bpf = None
         self.request_buffers = {}
-        self.last_cleanup = 0
         self.request_counter = 0
+        self.recorded_requests = [] # Store local copy for final summary
+        
+        # Prepare Log File
+        self.log_file = open(LOG_FILENAME, "w")
+        self.log_file.write(f"TIMESTAMP             | TID   | EVENT | SIZE (KB) | CURRENT TID RSS (KB) | PFN\n")
+        self.log_file.write("-" * 90 + "\n")
 
     def ip_to_str(self, ip):
-        """Convert IPv4 from u32 to dotted-quad string (handles endianness)."""
         try:
             return socket.inet_ntoa(struct.pack("<I", ip))
         except Exception:
             return "0.0.0.0"
 
     def parse_http_headers(self, data):
-        """Parse HTTP headers"""
         try:
             text = data.decode('utf-8', errors='ignore')
             header_end = text.find('\r\n\r\n')
             if header_end == -1:
                 header_end = text.find('\n\n')
-                if header_end == -1:
-                    header_end = len(text)
+                if header_end == -1: header_end = len(text)
             return text[:header_end]
         except:
             return ""
 
     def extract_request_id(self, headers_text):
-        """Extract or generate request ID"""
         for line in headers_text.split('\n'):
             line = line.strip()
             if line.lower().startswith('x-request-id:'):
                 return line[13:].strip()[:63]
-        
         first_line = headers_text.split('\n')[0] if headers_text else ""
         match = re.search(r'[?&]id=([^&\s]+)', first_line)
-        if match:
-            return match.group(1)[:63]
-        
+        if match: return match.group(1)[:63]
         self.request_counter += 1
         return f"AUTO_{self.request_counter:06d}"
 
     def extract_user_info(self, headers_text):
-        """Extract username, cookie, and authorization from headers"""
-        user_info = {
-            'username': '', 'cookie': '', 'authorization': '',
-            'has_username': False, 'has_cookie': False, 'has_authorization': False
-        }
+        user_info = {'username': '', 'cookie': '', 'authorization': '',
+                     'has_username': False, 'has_cookie': False, 'has_authorization': False}
         try:
             for line in headers_text.split('\n'):
                 line = line.strip()
@@ -566,8 +132,7 @@ class IntegratedSniffer:
                             import base64
                             decoded = base64.b64decode(auth_value[6:]).decode('utf-8', 'ignore')
                             if ':' in decoded:
-                                username = decoded.split(':')[0]
-                                user_info['username'] = username[:63]
+                                user_info['username'] = decoded.split(':')[0][:63]
                                 user_info['has_username'] = True
                         except: pass
                 elif not user_info['has_username']:
@@ -580,18 +145,14 @@ class IntegratedSniffer:
         return user_info
 
     def update_user_history(self, username, request_id, tid, src_ip, src_port):
-        """Add request to user's history and display"""
         if not username: return
         try:
             user_history_map = self.bpf.get_table("user_request_history")
             username_key = user_history_map.Key(name=username.encode('utf-8')[:63])
-            
             try:
                 history = user_history_map[username_key]
             except KeyError:
-                history = user_history_map.Leaf(
-                    username=username.encode('utf-8')[:63], request_count=0
-                )
+                history = user_history_map.Leaf(username=username.encode('utf-8')[:63], request_count=0)
             
             idx = history.request_count
             if idx >= 100:
@@ -606,18 +167,74 @@ class IntegratedSniffer:
             history.requests[idx].src_ip = src_ip
             history.requests[idx].src_port = src_port
             history.last_updated_ns = int(time.time_ns())
-            
             user_history_map[username_key] = history
             self.display_user_history(username, history)
-        except Exception as e:
-            print(f"  [⚠] Error updating user history: {e}")
+        except Exception: pass
 
-    def update_resource_tracking(self, request_id, tid, first_ssl_arrival_ns=None):
-        """Track resource usage for this request"""
+    def update_resource_tracking(self, request_id, tid, src_ip, src_port):
         try:
             tid_to_req_map = self.bpf.get_table("tid_to_request_id")
             resource_map = self.bpf.get_table("request_resources")
             
+            tid_mmap_map = self.bpf.get_table("tid_mmap_bytes")
+            tid_mprot_map = self.bpf.get_table("tid_mprotect_bytes")
+            tid_phys_map = self.bpf.get_table("tid_curr_phys")
+            
+            acc_mmap = 0
+            acc_mprot = 0
+            acc_phys = 0
+            try: acc_mmap = tid_mmap_map[ctypes.c_uint(tid)].value
+            except: pass
+            try: acc_mprot = tid_mprot_map[ctypes.c_uint(tid)].value
+            except: pass
+            try: acc_phys = tid_phys_map[ctypes.c_uint(tid)].value
+            except: pass
+            
+            # Check for temp ID
+            temp_request_id = None
+            try:
+                existing_key = tid_to_req_map[ctypes.c_uint(tid)]
+                temp_request_id = existing_key.id.decode('utf-8', 'ignore').rstrip('\x00')
+            except KeyError: pass
+            
+            if temp_request_id and temp_request_id != request_id and temp_request_id.startswith(f"TID_{tid}_"):
+                try:
+                    temp_key = resource_map.Key(id=temp_request_id.encode('utf-8')[:63])
+                    temp_usage = resource_map[temp_key]
+                    
+                    usage = resource_map.Leaf(
+                        request_id=request_id.encode('utf-8')[:63],
+                        tid=tid,
+                        start_time_ns=temp_usage.start_time_ns,
+                        cpu_cycles_start=temp_usage.cpu_cycles_start,
+                        memory_kb=self._get_tid_memory_kb(tid),
+                        is_complete=0,
+                        system_overhead_ns=0,
+                        thread_lifetime_ns=0,
+                        mmap_bytes=acc_mmap,
+                        mprotect_bytes=acc_mprot,
+                        peak_physical_bytes=max(temp_usage.peak_physical_bytes, acc_phys),
+                        src_ip=src_ip,
+                        src_port=src_port,
+                        bytes_sent=temp_usage.bytes_sent,
+                        bytes_recv=temp_usage.bytes_recv,
+                        disk_read_bytes=temp_usage.disk_read_bytes,
+                        disk_write_bytes=temp_usage.disk_write_bytes,
+                        # Transfer CPU Stats
+                        cpu_burst_total_ns=temp_usage.cpu_burst_total_ns,
+                        cpu_burst_count=temp_usage.cpu_burst_count,
+                        cpu_cycles_total=temp_usage.cpu_cycles_total,
+                        cpu_instructions_total=temp_usage.cpu_instructions_total
+                    )
+                    req_key = resource_map.Key(id=request_id.encode('utf-8')[:63])
+                    resource_map[req_key] = usage
+                    
+                    req_id_key_val = tid_to_req_map.Leaf(id=request_id.encode('utf-8')[:63])
+                    tid_to_req_map[ctypes.c_uint(tid)] = req_id_key_val
+                    del resource_map[temp_key]
+                    return
+                except KeyError: pass
+
             req_id_key_val = tid_to_req_map.Leaf(id=request_id.encode('utf-8')[:63])
             tid_to_req_map[ctypes.c_uint(tid)] = req_id_key_val
             
@@ -629,16 +246,26 @@ class IntegratedSniffer:
                 memory_kb=self._get_tid_memory_kb(tid),
                 is_complete=0,
                 system_overhead_ns=0,
-                thread_lifetime_ns=0
+                thread_lifetime_ns=0,
+                mmap_bytes=acc_mmap,
+                mprotect_bytes=acc_mprot,
+                peak_physical_bytes=acc_phys,
+                src_ip=src_ip,
+                src_port=src_port,
+                bytes_sent=0,
+                bytes_recv=0,
+                disk_read_bytes=0,
+                disk_write_bytes=0,
+                cpu_burst_total_ns=0,
+                cpu_burst_count=0,
+                cpu_cycles_total=0,
+                cpu_instructions_total=0
             )
-            
             req_key = resource_map.Key(id=request_id.encode('utf-8')[:63])
             resource_map[req_key] = usage
-        except Exception as e:
-            print(f"  [⚠] Error tracking resources: {e}")
+        except Exception as e: print(f"Error tracking: {e}")
 
-    def complete_resource_tracking(self, request_id, first_ssl_arrival_ns=None):
-        """Mark request as complete and calculate final metrics"""
+    def complete_resource_tracking(self, request_id, thread_exit=False):
         try:
             resource_map = self.bpf.get_table("request_resources")
             req_key = resource_map.Key(id=request_id.encode('utf-8')[:63])
@@ -647,115 +274,162 @@ class IntegratedSniffer:
             completion_time_ns = int(time.time_ns())
             usage.end_time_ns = completion_time_ns
             usage.duration_ns = usage.end_time_ns - usage.start_time_ns
-            usage.cpu_cycles_end = usage.end_time_ns
-            usage.cpu_cycles_used = usage.cpu_cycles_end - usage.cpu_cycles_start
+            
+            # --- New CPU Stats Calculation ---
+            total_cpu_ms = usage.cpu_burst_total_ns / 1_000_000.0
+            avg_burst_ms = 0
+            if usage.cpu_burst_count > 0:
+                avg_burst_ms = total_cpu_ms / usage.cpu_burst_count
+            
+            total_cycles = usage.cpu_cycles_total
+            avg_cycles = 0
+            if usage.cpu_burst_count > 0:
+                avg_cycles = total_cycles / usage.cpu_burst_count
+            
+            total_instructions = usage.cpu_instructions_total
+            avg_instructions = 0
+            if usage.cpu_burst_count > 0:
+                avg_instructions = total_instructions / usage.cpu_burst_count
+            # ---------------------------------
 
-            # =========================================================================
-            # MODIFIED: Fetch actual probe overhead from BPF map. This is the core fix.
-            # =========================================================================
             try:
                 overhead_map = self.bpf.get_table("tid_to_overhead_ns")
                 usage.system_overhead_ns = overhead_map[ctypes.c_uint(usage.tid)].value
-            except KeyError:
-                usage.system_overhead_ns = 0
+            except KeyError: pass
 
-            # Restore original logic for thread lifetime
-            try:
-                thread_start_map = self.bpf.get_table("tid_to_thread_start")
-                thread_start_ns = thread_start_map[ctypes.c_uint(usage.tid)].value
-                # Only update if BPF exit probe hasn't set the final value
-                if usage.thread_lifetime_ns == 0:
+            if usage.thread_lifetime_ns == 0:
+                 try:
+                    thread_start_map = self.bpf.get_table("tid_to_thread_start")
+                    thread_start_ns = thread_start_map[ctypes.c_uint(usage.tid)].value
                     usage.thread_lifetime_ns = completion_time_ns - thread_start_ns
-            except KeyError:
-                if usage.thread_lifetime_ns == 0:
+                 except: 
                     usage.thread_lifetime_ns = usage.duration_ns
             
             usage.memory_kb = max(usage.memory_kb, self._get_tid_memory_kb(usage.tid))
             usage.is_complete = 1
             resource_map[req_key] = usage
+            
+            # Re-read to ensure we have kernel updates
+            usage = resource_map[req_key]
+            
+            # Save to python list
+            record = {
+                'id': request_id,
+                'ts': datetime.fromtimestamp(usage.start_time_ns / 1e9).strftime('%H:%M:%S'),
+                'tid': usage.tid,
+                'src': f"{self.ip_to_str(usage.src_ip)}:{usage.src_port}",
+                'mmap': usage.mmap_bytes / 1024.0,
+                'mprot': usage.mprotect_bytes / 1024.0,
+                'peak': usage.peak_physical_bytes / 1024.0,
+                'overhead': usage.system_overhead_ns,
+                'latency': usage.duration_ns / 1_000_000.0,
+                'send': usage.bytes_sent / 1024.0,
+                'recv': usage.bytes_recv / 1024.0,
+                'disk_rd': usage.disk_read_bytes / 1024.0,
+                'disk_wr': usage.disk_write_bytes / 1024.0
+            }
+            
+            # Only add to list if not present (or update it)
+            found = False
+            for i, r in enumerate(self.recorded_requests):
+                if r['id'] == request_id:
+                    self.recorded_requests[i] = record
+                    found = True
+                    break
+            if not found:
+                self.recorded_requests.append(record)
 
-            # Display updated resource usage
-            duration_ms = usage.duration_ns / 1_000_000.0
-            lifetime_ms = usage.thread_lifetime_ns / 1_000_000.0
-            print(f"  [⏱] Resource Usage for {request_id}:")
-            print(f"      Userspace Duration: {duration_ms:.2f} ms")
-            if usage.memory_kb:
-                print(f"      Memory Usage: {usage.memory_kb} KB")
-            # print(f"      Thread Lifetime (Est.): {lifetime_ms:.2f} ms")
-            print(f"      Total eBPF Probe Overhead: {usage.system_overhead_ns:,} ns")
+            if thread_exit:
+                print(f"\n[Thread Exit] Stats for Request: {request_id}")
+                self.print_table_header()
+                self.print_table_row(record)
+                # Print separate block for CPU stats to preserve table structure
+                print(f"   ↳ [CPU DETAILED] Bursts: {usage.cpu_burst_count} | Avg Duration: {avg_burst_ms:.3f} ms | Total CPU: {total_cpu_ms:.3f} ms")
+                print(f"                    Avg Cycles: {avg_cycles:,.0f} | Total Cycles: {total_cycles:,.0f}")
+                print(f"                    Avg Instructions: {avg_instructions:,.0f} | Total Instructions: {total_instructions:,.0f}")
+            
+        except KeyError: pass
+        except Exception as e: print(f"Error completing: {e}")
 
-        except KeyError:
-            pass # Request might not be tracked if it started before the sniffer
-        except Exception as e:
-            print(f"  [⚠] Error completing resource tracking: {e}")
+    def print_table_header(self):
+        print("-" * 205)
+        print(f"{'Request-ID':<20} | {'Timestamp':<10} | {'Thread':<7} | {'Source IP:Port':<21} | {'MMap(KB)':>10} | {'Mprot(KB)':>10} | {'Peak Phy(KB)':>13} | {'Send(KB)':>10} | {'Recv(KB)':>10} | {'DiskRd(KB)':>11} | {'DiskWr(KB)':>11} | {'Overhead(ns)':>13} | {'Latency(ms)':>11}")
+        print("-" * 205)
 
+    def print_table_row(self, r):
+        print(f"{r['id']:<20} | {r['ts']:<10} | {r['tid']:<7} | {r['src']:<21} | {r['mmap']:>10.1f} | {r['mprot']:>10.1f} | {r['peak']:>13.1f} | {r['send']:>10.1f} | {r['recv']:>10.1f} | {r['disk_rd']:>11.1f} | {r['disk_wr']:>11.1f} | {r['overhead']:>13,d} | {r['latency']:>11.2f}")
 
     def _get_tid_memory_kb(self, tid):
-        """Return VmRSS (kB) for a given thread id by reading /proc."""
         try:
-            with open(f"/proc/{os.getpid()}/task/{tid}/status", 'r') as f:
+            with open(f"/proc/{self.pid}/task/{tid}/status", 'r') as f:
                 for line in f:
-                    if line.startswith('VmRSS:'):
-                        return int(line.split()[1])
-        except Exception:
-            return 0
+                    if line.startswith('VmRSS:'): return int(line.split()[1])
+        except: return 0
         return 0
 
     def display_user_history(self, username, history):
-        """Display complete request history for a user in a formatted table."""
-        print(f"\n--- User History for: {username} ---")
-        
-        header = f"| {'#':<3} | {'Request ID':<20} | {'Time':<8} | {'Thread':<7} | {'Source IP:Port':<21} | {'Overhead (ns)':>15} | {'Thread Lifetime (ms)':>22} |"
-        separator = '+' + '-' * 5 + '+' + '-' * 22 + '+' + '-' * 10 + '+' + '-' * 9 + '+' + '-' * 23 + '+' + '-' * 17 + '+' + '-' * 24 + '+'
-        
-        print(separator)
-        print(header)
-        print(separator)
-        
-        if history.request_count == 0:
-            print(f"| {'No requests yet.':<122} |")
-        else:
+        print(f"\n--- User History: {username} ---")
+        print(f"| {'#':<3} | {'Request ID':<20} | {'Thread':<7} | {'Overhead(ns)':>13} | {'Peak RSS(MB)':>13} |")
+        print("-" * 75)
+        if history.request_count > 0:
             resource_map = self.bpf.get_table("request_resources")
             for i in range(history.request_count):
                 req_entry = history.requests[i]
                 req_id = req_entry.request_id.decode('utf-8', 'ignore').rstrip('\x00')
                 if not req_id: continue
-                
-                time_str = time.strftime('%H:%M:%S', time.localtime(req_entry.timestamp_ns / 1e9))
-                src_ip_str = self.ip_to_str(req_entry.src_ip)
-                source_str = f"{src_ip_str}:{req_entry.src_port}"
-
                 overhead_ns = 0
-                lifetime_ms = 0.0
+                peak_mem = 0
                 try:
                     req_key = resource_map.Key(id=req_id.encode('utf-8')[:63])
                     usage = resource_map[req_key]
                     overhead_ns = usage.system_overhead_ns
-                    lifetime_ms = usage.thread_lifetime_ns / 1_000_000.0
-                except KeyError:
-                    pass
-                
-                print(f"| {i+1:<3} | {req_id:<20} | {time_str:<8} | {req_entry.tid:<7} | {source_str:<21} | {overhead_ns:>15,d} | {lifetime_ms:>22.2f} |")
-
-        print(separator)
+                    peak_mem = usage.peak_physical_bytes / 1024 / 1024
+                except KeyError: pass
+                print(f"| {i+1:<3} | {req_id:<20} | {req_entry.tid:<7} | {overhead_ns:>13,d} | {peak_mem:>13.2f} |")
         print()
 
     def handle_ssl_event(self, cpu, data, size):
-        """Process SSL events"""
         event = self.bpf["ssl_events"].event(data)
         tid = event.tid
         
         if tid not in self.request_buffers:
+            temp_request_id = f"TID_{tid}_{int(time.time_ns())}"
             self.request_buffers[tid] = {
                 'data': b'', 'pid': event.pid, 'tid': tid,
                 'comm': event.comm.decode('utf-8', 'ignore'),
                 'has_conn_info': event.has_conn_info, 'src_ip': event.src_ip,
                 'dst_ip': event.dst_ip, 'src_port': event.src_port, 'dst_port': event.dst_port,
-                'timestamp': time.time(), 'start_time': time.time()
+                'timestamp': time.time()
             }
+            # Initialize tracking so Alloc/Mmap are caught early
+            try:
+                tid_to_req_map = self.bpf.get_table("tid_to_request_id")
+                req_id_key_val = tid_to_req_map.Leaf(id=temp_request_id.encode('utf-8')[:63])
+                tid_to_req_map[ctypes.c_uint(tid)] = req_id_key_val
+                
+                resource_map = self.bpf.get_table("request_resources")
+                usage = resource_map.Leaf(
+                    request_id=temp_request_id.encode('utf-8')[:63],
+                    tid=tid,
+                    start_time_ns=int(time.time_ns()),
+                    peak_physical_bytes=0,
+                    src_ip=event.src_ip,
+                    src_port=event.src_port,
+                    bytes_sent=0,
+                    bytes_recv=0,
+                    disk_read_bytes=0,
+                    disk_write_bytes=0,
+                    # New fields init
+                    cpu_burst_total_ns=0,
+                    cpu_burst_count=0,
+                    cpu_cycles_total=0,
+                    cpu_instructions_total=0
+                )
+                req_key = resource_map.Key(id=temp_request_id.encode('utf-8')[:63])
+                resource_map[req_key] = usage
+            except: pass
         
         self.request_buffers[tid]['data'] += bytes(event.data[:event.data_len])
-        
         if event.has_conn_info:
             self.request_buffers[tid].update({
                 'has_conn_info': True, 'src_ip': event.src_ip, 'dst_ip': event.dst_ip,
@@ -764,170 +438,91 @@ class IntegratedSniffer:
         
         full_data = self.request_buffers[tid]['data']
         if b'\r\n\r\n' in full_data or b'\n\n' in full_data:
-            if full_data.startswith((b'GET', b'POST', b'PUT', b'DELETE', b'HEAD', b'OPTIONS', b'PATCH')):
+            if full_data.startswith((b'GET', b'POST', b'PUT', b'DELETE')):
                 self.display_complete_request(tid)
             del self.request_buffers[tid]
-        
-        now = time.time()
-        if now - self.last_cleanup > 5:
-            self.last_cleanup = now
-            for t in [t for t, req in self.request_buffers.items() if now - req['timestamp'] > 5]:
-                del self.request_buffers[t]
 
     def display_complete_request(self, tid):
-        """Display complete request with all tracking info"""
         req = self.request_buffers[tid]
-        
-        print("\n" + "="*80)
-        print("HTTPS REQUEST INTERCEPTED".center(80))
-        print("="*80)
-        print(f"  {'Process:':<12} {req['comm']} (PID: {req['pid']}, TID: {req['tid']})")
-        
-        if req['has_conn_info']:
-            src = f"{self.ip_to_str(req['src_ip'])}:{req['src_port']}"
-            dst = f"{self.ip_to_str(req['dst_ip'])}:{req['dst_port']}"
-            print(f"  {'Connection:':<12} {src} -> {dst}")
-        
         headers = self.parse_http_headers(req['data'])
         request_id = self.extract_request_id(headers)
         user_info = self.extract_user_info(headers)
-
-        print(f"  {'Request ID:':<12} {request_id}")
-        if user_info['has_username']:
-            print(f"  {'User:':<12} {user_info['username']}")
-        
-        print("-" * 80)
-        print(headers.strip())
-        print("-" * 80)
         
         if user_info['has_username'] and req['has_conn_info']:
-            self.update_user_history(
-                user_info['username'], request_id, tid, req['src_ip'], req['src_port']
-            )
+            self.update_user_history(user_info['username'], request_id, tid, req['src_ip'], req['src_port'])
         
-        self.update_resource_tracking(request_id, tid)
+        self.update_resource_tracking(request_id, tid, req['src_ip'], req['src_port'])
         self.complete_resource_tracking(request_id)
-        print()
 
-    def display_all_summaries(self):
-        """Display all tracking summaries on exit"""
-        self.display_resource_summary()
-        self.display_user_histories(summary_mode=True)
+    def handle_mem_event(self, cpu, data, size):
+        ev = self.bpf["mem_events"].event(data)
+        ts = datetime.fromtimestamp(ev.timestamp_ns / 1e9).strftime('%H:%M:%S.%f')
+        etype = "ALLOC" if ev.type == 1 else "FREE "
+        size_kb = ev.size_bytes / 1024
+        total_kb = ev.current_total_bytes / 1024
+        log_line = f"{ts} | {ev.tid:<5} | {etype} | {size_kb:>9.2f} | {total_kb:>20.2f} | {ev.pfn}\n"
+        self.log_file.write(log_line)
+        self.log_file.flush()
 
-    def display_resource_summary(self):
-        """Display resource usage summary in a formatted table."""
-        print("\n" + "="*80)
-        print("📊 RESOURCE USAGE SUMMARY".center(80))
-        print("="*80)
-        
-        try:
-            resource_map = self.bpf.get_table("request_resources")
-            if not resource_map:
-                print("No resource data tracked.")
-                return
-
-            header = f"| {'Request ID':<20} | {'Duration (ms)':>15} | {'Overhead (ns)':>15} | {'Lifetime (ms)':>15} | {'Memory (KB)':>12} | {'Status':<10} |"
-            separator = '+' + '-'*22 + '+' + '-'*17 + '+' + '-'*17 + '+' + '-'*17 + '+' + '-'*14 + '+' + '-'*12 + '+'
-            
-            print(separator)
-            print(header)
-            print(separator)
-            
-            for req_id_key, usage in sorted(resource_map.items(), key=lambda item: item[1].start_time_ns):
-                req_id = req_id_key.id.decode('utf-8', 'ignore').rstrip('\x00')
-                if not req_id: continue
-                
-                duration_ms = usage.duration_ns / 1e6
-                overhead_ns = usage.system_overhead_ns
-                lifetime_ms = usage.thread_lifetime_ns / 1e6
-                status = "Complete" if usage.is_complete else "In-Flight"
-                mem_kb = usage.memory_kb if usage.memory_kb else 0
-
-                print(f"| {req_id:<20} | {duration_ms:>15.2f} | {overhead_ns:>15,d} | {lifetime_ms:>15.2f} | {mem_kb:>12,d} | {status:<10} |")
-
-            print(separator)
-        except Exception as e:
-            print(f"  Error displaying resource summary: {e}")
-
-    def display_user_histories(self, summary_mode=False):
-        """Display all user request histories."""
-        if not summary_mode: return # This is now handled live
-        
-        print("\n" + "="*80)
-        print("👥 ALL USER HISTORIES".center(80))
-        print("="*80)
-        
-        try:
-            user_history_map = self.bpf.get_table("user_request_history")
-            if not user_history_map:
-                print("No user histories tracked.")
-            else:
-                for username_key, history in user_history_map.items():
-                    username = username_key.name.decode('utf-8', 'ignore').rstrip('\x00')
-                    if username:
-                        self.display_user_history(username, history)
-        except Exception as e:
-            print(f"  Error displaying user histories: {e}")
+    def handle_exit_event(self, cpu, data, size):
+        ev = self.bpf["exit_events"].event(data)
+        req_id = ev.request_id.decode('utf-8', 'ignore').rstrip('\x00')
+        self.complete_resource_tracking(req_id, thread_exit=True)
 
     def run(self):
-        """Main execution"""
-        print("="*80)
-        print("🔍 Integrated HTTPS Server Sniffer".center(80))
-        print("="*80)
-        print("Initializing eBPF probes... (This may take a moment)")
+        print("="*60)
+        print("🔍 INTEGRATED FULL SNIFFER (FIXED + IO + CPU BURSTS)".center(60))
+        print("="*60)
+        print(f"Target PID: {self.pid}")
+        print(f"Log File:   {os.path.abspath(LOG_FILENAME)}")
+        print("Initializing BPF... (Please wait)")
         
+        num_cpus = os.cpu_count() or 128
+        bpf_source = load_bpf_program(self.pid, num_cpus)
+        self.bpf = BPF(text=bpf_source)
+        ssl_lib = BPF.find_library("ssl") or "/usr/lib/libssl.so.3"
+        
+        # Open Hardware Perf Counters for Cycles and Instructions
+        self.bpf["perf_cycles"].open_perf_event(PerfType.HARDWARE, PerfHWConfig.CPU_CYCLES)
+        self.bpf["perf_instructions"].open_perf_event(PerfType.HARDWARE, PerfHWConfig.INSTRUCTIONS)
+        
+        self.bpf.attach_uprobe(name=ssl_lib, sym="SSL_read", fn_name="probe_ssl_read_enter")
+        self.bpf.attach_uretprobe(name=ssl_lib, sym="SSL_read", fn_name="probe_ssl_read_exit")
         try:
-            self.bpf = BPF(text=BPF_PROGRAM)
-            ssl_lib_path = BPF.find_library("ssl") or "/usr/lib/libssl.so.3"
-            print(f"Found SSL library at: {ssl_lib_path}")
+            self.bpf.attach_uprobe(name=ssl_lib, sym="SSL_read_ex", fn_name="probe_ssl_read_ex_enter")
+            self.bpf.attach_uretprobe(name=ssl_lib, sym="SSL_read_ex", fn_name="probe_ssl_read_ex_exit")
+        except: pass
+        
+        print("✓ BPF Loaded. Monitoring...")
+        # self.print_table_header()
 
-            self.bpf.attach_uprobe(name=ssl_lib_path, sym="SSL_read", fn_name="probe_ssl_read_enter")
-            self.bpf.attach_uretprobe(name=ssl_lib_path, sym="SSL_read", fn_name="probe_ssl_read_exit")
-            print("✓ Attached to SSL_read")
-            
+
+        #register callbacks from ebpf programs to our python functions
+        self.bpf["ssl_events"].open_perf_buffer(self.handle_ssl_event)
+        self.bpf["mem_events"].open_perf_buffer(self.handle_mem_event)
+        self.bpf["exit_events"].open_perf_buffer(self.handle_exit_event)
+        
+        while True:
             try:
-                self.bpf.attach_uprobe(name=ssl_lib_path, sym="SSL_read_ex", fn_name="probe_ssl_read_ex_enter")
-                self.bpf.attach_uretprobe(name=ssl_lib_path, sym="SSL_read_ex", fn_name="probe_ssl_read_ex_exit")
-                print("✓ Attached to SSL_read_ex")
-            except Exception:
-                print("ℹ SSL_read_ex not found, skipping.")
-            
-            print("\n" + "="*80)
-            print("🎯 Monitoring HTTPS traffic... Press Ctrl+C to stop.".center(80))
-            print("="*80)
-            
-            self.bpf["ssl_events"].open_perf_buffer(self.handle_ssl_event)
-            while True:
-                try:
-                    self.bpf.perf_buffer_poll(timeout=100)
-                except KeyboardInterrupt:
-                    print("\n\n🛑 Stopping sniffer...")
-                    self.display_all_summaries()
-                    break
-        except Exception as e:
-            print(f"\n[ERROR] Failed to initialize eBPF program: {e}")
-            import traceback
-            traceback.print_exc()
+                self.bpf.perf_buffer_poll()
+            except KeyboardInterrupt:
+                print("\n\n" + "="*205)
+                print("FINAL SESSION SUMMARY".center(205))
+                self.print_table_header()
+                for r in self.recorded_requests:
+                    self.print_table_row(r)
+                print("="*205)
+                print(f"Memory log saved to: {LOG_FILENAME}")
+                self.log_file.close()
+                break
 
 if __name__ == "__main__":
     if os.geteuid() != 0:
-        print("This program must be run as root!")
-        exit(1)
-    sniffer = IntegratedSniffer()
-    sniffer.run()
-
-
-
-"""
-CFA:
-per request:
-1.Memory usage: extract memory usage from sbrk, brk and mmap calls(stack light)
-==>follow mmap calls with such signature(flags):[pid 55294] mmap(NULL, 104861696, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f0617ffe000
-==> and also mprotect(NONE->RW)
-2. N/w usage: number of bytes sent, received for the request and number of send/receive calls made. 
-3. CPU usage: number of CPU cycles used by the request along with the exact time run.
-4. Disk I/O: number of read and write calls made by the request and also the number of bytes read and written.
-5. Latency numbers: Start small with user space requests which take 1-5 mins to return response and try to approximate that using Thread lifetime and see if that matches.
-    ==>Also get better look into added latency numbers of our system(Test this by adding delays of 1-5 mins in ebpf programs.)
-Then move onto service flow attribution.
-"""
+        print("Run as root.")
+        sys.exit(1)
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-p", "--pid", type=int, required=True, help="Target PID")
+    args = parser.parse_args()
+    
+    IntegratedSnifferFull(args.pid).run()

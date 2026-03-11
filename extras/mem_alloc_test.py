@@ -24,8 +24,8 @@ def allocate_large_object():
 def allocate_in_thread():
     def thread_task():
         print(f"Thread {threading.get_ident()} allocating 1MB object...")
-        s = "b" * (2 * 1024 * 1024)
-        # s = "b" * (100 * 1024 * 1024)
+        s = "b" * (1024)
+        # s = "b" * (  1024)
 
         print(f"Thread {threading.get_ident()} finished allocation.")
         
@@ -37,7 +37,7 @@ def allocate_in_thread():
 
 if __name__ == "__main__":
     print(f"PID: {os.getpid()}")
-    # allocate_small_objects()
+    allocate_small_objects()
     # allocate_large_object()
     allocate_in_thread()
     allocate_in_thread()
