@@ -5,8 +5,8 @@
 static inline int is_target_process() {
     u64 pid_tgid = bpf_get_current_pid_tgid();
     u32 pid = pid_tgid >> 32;
-    if (pid != TARGET_PID) return 0;
-    return 1;
+    u32 *val = target_pids.lookup(&pid);
+    return (val != NULL) ? 1 : 0;
 }
 
 static struct sock* get_sock_from_fd(u32 fd) {

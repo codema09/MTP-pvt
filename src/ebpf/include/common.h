@@ -22,7 +22,6 @@
 #define MAP_PRIVATE 0x02
 #define MAP_ANONYMOUS 0x20
 
-#define TARGET_PID __TARGET_PID__
 #define NUM_CPUS __NUM_CPUS__
 
 // ═══════════════════════════════════════════════════════════════
@@ -71,6 +70,8 @@ struct resource_usage_t {
     u8 is_complete;
     u32 src_ip;
     u16 src_port;
+    u32 dst_ip;
+    u16 dst_port;
     u64 bytes_sent;
     u64 bytes_recv;
     u64 disk_read_bytes;
@@ -148,4 +149,18 @@ struct cpu_burst_start_t {
     u64 ts;
     u64 cycles;
     u64 instructions;
+};
+
+struct tcp_connect_args_t {
+    u32 fd;
+    u32 dst_ip;
+    u16 dst_port;
+};
+
+struct conn_event_t {
+    u32 tid;
+    u32 src_ip;
+    u32 dst_ip;
+    u16 src_port;
+    u16 dst_port;
 };

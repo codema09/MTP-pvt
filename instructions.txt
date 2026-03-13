@@ -17,7 +17,7 @@ In separate terminals:
 
 
 3.Run sudo python src/new-architecture-USC.py -p <PID>(PID is of the server in second step, look at the terminal to get this,like 53265 in the sample output)
-4.Run python tests/concurrent-test-all-features.sh
+4.Run tests/concurrent-test-all-features.sh
 
 
 ====> 3rd terminal shows all the logs collected.Stop this program to see the final results in a table.

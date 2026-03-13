@@ -6,6 +6,7 @@ import socketserver
 import threading
 import os
 import sys
+import argparse
 import time
 import random
 import ctypes
@@ -72,7 +73,7 @@ def monitor_memory():
 
 # --- Server Configuration ---
 HOST = "localhost"
-PORT = 8443
+PORT = None  # resolved from CLI argument at startup
 CERT_FILE = "cert.pem"
 KEY_FILE = "key.pem"
 ENABLE_RANDOM_DELAY = True  # Set to False for normal operation
@@ -209,11 +210,14 @@ class ThreadInfoHandler(http.server.SimpleHTTPRequestHandler):
 
         # self.do_brk()
 
-        # Call Loopback Server (HTTP)
+        # Call HTTPS Loopback Server
         try:
-            print(f"  [LOOPBACK] sending 100B request to http://localhost:9009 ...")
-            req = urllib.request.Request("http://localhost:9009/", data=b"X"*100, method='POST')
-            with urllib.request.urlopen(req, timeout=2) as f:
+            print(f"  [LOOPBACK] sending 100B request to https://localhost:9443 ...")
+            ssl_ctx = ssl.create_default_context()
+            ssl_ctx.check_hostname = False
+            ssl_ctx.verify_mode = ssl.CERT_NONE
+            req = urllib.request.Request("https://localhost:9443/", data=b"X"*100, method='POST')
+            with urllib.request.urlopen(req, timeout=2, context=ssl_ctx) as f:
                  resp = f.read().decode('utf-8')
                  print(f"  [LOOPBACK] Response: {resp}")
         except Exception as e:
@@ -255,6 +259,12 @@ class ThreadingTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 
 # --- Main execution ---
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Threaded HTTPS test server")
+    parser.add_argument("-P", "--port", type=int, default=8443,
+                        help="Port to listen on (default: 8443)")
+    cli_args = parser.parse_args()
+    PORT = cli_args.port
+
     if not os.path.exists(CERT_FILE) or not os.path.exists(KEY_FILE):
         print("=" * 60)
         print(" ERROR: Certificate (cert.pem) or Key (key.pem) not found.")
@@ -277,7 +287,7 @@ if __name__ == "__main__":
     print("=" * 70)
     print("Ready to be traced by 'server-sniffer.py'. Waiting for connections...")
     print("=" * 70 + "\n")
-    
+
     httpd.serve_forever()
 
 

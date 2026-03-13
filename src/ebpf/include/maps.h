@@ -2,6 +2,9 @@
 // maps.h — All BPF map declarations
 // ═══════════════════════════════════════════════════════════════
 
+// Registered PIDs to monitor (populated from userspace)
+BPF_HASH(target_pids, u32, u32);
+
 // Connection & Request Tracking
 BPF_HASH(fd_to_conn, u32, struct conn_tuple_t);
 BPF_HASH(tid_to_fd, u64, u32);
@@ -27,10 +30,14 @@ BPF_HASH(cpu_burst_start_map, u32, struct cpu_burst_start_t);
 BPF_PERF_ARRAY(perf_cycles, NUM_CPUS);
 BPF_PERF_ARRAY(perf_instructions, NUM_CPUS);
 
+// Outgoing Connection Tracking
+BPF_HASH(tcp_connect_args, u64, struct tcp_connect_args_t);
+
 // Perf Output Buffers
 BPF_PERF_OUTPUT(ssl_events);
 BPF_PERF_OUTPUT(mem_events);
 BPF_PERF_OUTPUT(exit_events);
+BPF_PERF_OUTPUT(conn_events);
 
 // SSL Scratch Space
 BPF_HASH(ssl_read_args, u64, void *);

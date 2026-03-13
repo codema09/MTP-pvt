@@ -17,7 +17,7 @@ TRACEPOINT_PROBE(sched, sched_switch) {
     u32 prev_tgid = pid_tgid >> 32;
     u32 prev_tid = (u32)pid_tgid;
 
-    if (prev_tgid == TARGET_PID) {
+    if (target_pids.lookup(&prev_tgid) != NULL) {
         struct cpu_burst_start_t *start_data = cpu_burst_start_map.lookup(&prev_tid);
         if (start_data) {
             u64 delta_ns = now_ts - start_data->ts;
