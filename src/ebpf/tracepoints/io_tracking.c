@@ -1,5 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // io_tracking.c — Network & Disk I/O Syscall Tracking
+//   Also detects Apache Thrift binary-framed messages on plain TCP
+//   so that DeathStarBench inter-service calls are attributed.
 // ═══════════════════════════════════════════════════════════════
 
 TRACEPOINT_PROBE(syscalls, sys_enter_recvfrom) {
@@ -47,6 +49,14 @@ TRACEPOINT_PROBE(syscalls, sys_enter_recvfrom) {
     } else {
         tid_to_overhead_ns.update(&tid, &delta);
     }
+
+    // Save recv buffer pointer for Thrift detection at exit.
+    struct thrift_recv_args_t targs;
+    __builtin_memset(&targs, 0, sizeof(targs));
+    targs.fd  = fd;
+    targs.buf = (void *)args->ubuf;
+    thrift_recv_args.update(&tid, &targs);
+
     return 0;
 }
 
@@ -93,6 +103,14 @@ TRACEPOINT_PROBE(syscalls, sys_enter_read) {
             } else {
                 tid_to_overhead_ns.update(&tid, &delta);
             }
+
+            // Save recv buffer pointer for Thrift detection at exit.
+            struct thrift_recv_args_t targs;
+            __builtin_memset(&targs, 0, sizeof(targs));
+            targs.fd  = fd;
+            targs.buf = (void *)args->buf;
+            thrift_recv_args.update(&tid, &targs);
+
             return 0;
         }
     }
@@ -142,7 +160,7 @@ TRACEPOINT_PROBE(syscalls, sys_enter_write) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Shared exit handler for all I/O syscalls
+// Shared exit handler for I/O byte accounting
 // ═══════════════════════════════════════════════════════════════
 
 static inline void handle_sys_exit(long ret, int is_recv) {
@@ -166,13 +184,90 @@ static inline void handle_sys_exit(long ret, int is_recv) {
     }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// Thrift binary-protocol detection helper
+//
+// Thrift strict-binary framed wire format (TFramedTransport):
+//   [4 B frame_size BE] [4 B version|type = 0x80 0x01 0x00 TT]
+//   [4 B name_len BE] [name_len B method] [4 B seq_id BE] [fields]
+//
+// Unframed strict-binary:
+//   [4 B version|type = 0x80 0x01 0x00 TT]
+//   [4 B name_len BE] [name_len B method] [4 B seq_id BE] [fields]
+//
+// We detect the magic bytes, read THRIFT_CAPTURE_SIZE bytes, attach
+// the connection 4-tuple, and emit a thrift_event to userspace.
+// ═══════════════════════════════════════════════════════════════
+
+static inline void detect_and_emit_thrift(void *ctx, long ret, u32 tid) {
+    struct thrift_recv_args_t *tptr = thrift_recv_args.lookup(&tid);
+    if (tptr == NULL) return;
+
+    void *buf      = tptr->buf;
+    u32  saved_fd  = tptr->fd;
+    thrift_recv_args.delete(&tid);
+
+    if (ret <= 0 || buf == NULL) return;
+
+    // Read the first 8 bytes to check for Thrift magic.
+    // Stack read of 8 bytes is always safe for the verifier.
+    u8 hdr[8];
+    __builtin_memset(hdr, 0, sizeof(hdr));
+    if (bpf_probe_read_user(hdr, sizeof(hdr), buf) != 0) return;
+
+    // Framed strict binary:   hdr[4..6] == 0x80 0x01 0x00
+    // Unframed strict binary: hdr[0..2] == 0x80 0x01 0x00
+    u8 is_thrift = 0;
+    if (hdr[4] == 0x80 && hdr[5] == 0x01 && hdr[6] == 0x00) is_thrift = 1;
+    if (hdr[0] == 0x80 && hdr[1] == 0x01 && hdr[2] == 0x00) is_thrift = 1;
+    if (!is_thrift) return;
+
+    // Pull scratch buffer from per-CPU array (avoids large stack alloc).
+    u32 zero = 0;
+    struct thrift_event_t *evt = thrift_scratch.lookup(&zero);
+    if (evt == NULL) return;
+
+    u64 pid_tgid = bpf_get_current_pid_tgid();
+    evt->pid = pid_tgid >> 32;
+    evt->tid = tid;
+    evt->has_conn_info = 0;
+    bpf_get_current_comm(&evt->comm, sizeof(evt->comm));
+
+    // Always read exactly THRIFT_CAPTURE_SIZE bytes (constant required by
+    // the verifier); data_len tells userspace how many bytes are valid.
+    u32 copy_len = (u32)ret;
+    if (copy_len > THRIFT_CAPTURE_SIZE) copy_len = THRIFT_CAPTURE_SIZE;
+    evt->data_len = copy_len;
+    bpf_probe_read_user(evt->data, THRIFT_CAPTURE_SIZE, buf);
+
+    // Attach connection 4-tuple from the fd→conn cache.
+    struct conn_tuple_t *conn = fd_to_conn.lookup(&saved_fd);
+    if (conn != NULL) {
+        evt->src_ip   = conn->src_ip;
+        evt->src_port = conn->src_port;
+        evt->dst_ip   = conn->dst_ip;
+        evt->dst_port = conn->dst_port;
+        evt->has_conn_info = 1;
+    }
+
+    thrift_events.perf_submit(ctx, evt, sizeof(*evt));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Exit tracepoints: byte accounting + Thrift detection
+// ═══════════════════════════════════════════════════════════════
+
 TRACEPOINT_PROBE(syscalls, sys_exit_recvfrom) {
     handle_sys_exit(args->ret, 1);
+    u32 tid = (u32)bpf_get_current_pid_tgid();
+    detect_and_emit_thrift(args, args->ret, tid);
     return 0;
 }
 
 TRACEPOINT_PROBE(syscalls, sys_exit_read) {
     handle_sys_exit(args->ret, 1);
+    u32 tid = (u32)bpf_get_current_pid_tgid();
+    detect_and_emit_thrift(args, args->ret, tid);
     return 0;
 }
 

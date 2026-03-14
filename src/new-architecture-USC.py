@@ -11,6 +11,7 @@ Usage: sudo python3 integrated_sniffer_full.py -p <PID1> [PID2 ...]
 """
 
 from bcc import BPF, PerfType, PerfHWConfig
+import hashlib
 import socket
 import struct
 import ctypes
@@ -312,6 +313,12 @@ class IntegratedSnifferFull:
                     usage.thread_lifetime_ns = usage.duration_ns
             
             usage.memory_kb = max(usage.memory_kb, self._get_tid_memory_kb(usage.tid))
+            try:
+                tid_phys_map = self.bpf.get_table("tid_curr_phys")
+                curr_phys = tid_phys_map[ctypes.c_uint(usage.tid)].value
+                if curr_phys > usage.peak_physical_bytes:
+                    usage.peak_physical_bytes = curr_phys
+            except KeyError: pass
             usage.is_complete = 1
             resource_map[req_key] = usage
             
@@ -548,6 +555,91 @@ class IntegratedSnifferFull:
         req_id = ev.request_id.decode('utf-8', 'ignore').rstrip('\x00')
         self.complete_resource_tracking(req_id, thread_exit=True)
 
+    # ───────────────────────────────────────────────────────────
+    # Thrift RPC support (DeathStarBench / plain-TCP inter-service)
+    # ───────────────────────────────────────────────────────────
+
+    def _parse_thrift_header(self, data: bytes):
+        """Parse a Thrift strict-binary framed (or unframed) message header.
+
+        Wire layout — framed (TFramedTransport + TBinaryProtocol strict):
+            [4 B frame_size BE][4 B 0x80 0x01 0x00 TT][4 B name_len BE]
+            [name_len B method][4 B seq_id BE][fields…]
+
+        Unframed (TBinaryProtocol strict, no framing):
+            [4 B 0x80 0x01 0x00 TT][4 B name_len BE]
+            [name_len B method][4 B seq_id BE][fields…]
+
+        Message type TT: 1=CALL  2=REPLY  3=EXCEPTION  4=ONEWAY
+
+        Returns (method_name, msg_type, seq_id) or (None, None, None).
+        """
+        import struct
+        try:
+            if len(data) < 8:
+                return None, None, None
+
+            # Detect framed vs unframed by checking magic position.
+            if data[4] == 0x80 and data[5] == 0x01 and data[6] == 0x00:
+                off = 4   # framed: skip the 4-byte frame-size prefix
+            elif data[0] == 0x80 and data[1] == 0x01 and data[2] == 0x00:
+                off = 0   # unframed
+            else:
+                return None, None, None
+
+            msg_type = data[off + 3]
+            if msg_type not in (1, 2, 3, 4):
+                return None, None, None
+
+            name_len = struct.unpack('>I', data[off+4:off+8])[0]
+            if name_len == 0 or name_len > 255:
+                return None, None, None
+            if off + 8 + name_len + 4 > len(data):
+                return None, None, None
+
+            method  = data[off+8:off+8+name_len].decode('utf-8', errors='replace')
+            seq_id  = struct.unpack('>i', data[off+8+name_len:off+12+name_len])[0]
+            return method, msg_type, seq_id
+        except Exception:
+            return None, None, None
+
+    def handle_thrift_event(self, cpu, data, size):
+        """Receive a Thrift binary message detected on a plain-TCP recv().
+
+        Only CALL (type=1) and ONEWAY (type=4) messages are tracked as new
+        requests; REPLY/EXCEPTION are replies from downstream and are ignored.
+        """
+        event = self.bpf["thrift_events"].event(data)
+        tid   = event.tid
+        raw   = bytes(event.data[:event.data_len])
+
+        method, msg_type, seq_id = self._parse_thrift_header(raw)
+        if method is None:
+            return
+
+        # Track inbound RPC calls only (CALL=1, ONEWAY=4).
+        if msg_type not in (1, 4):
+            return
+
+        src_ip   = event.src_ip   if event.has_conn_info else 0
+        src_port = event.src_port if event.has_conn_info else 0
+        dst_ip   = event.dst_ip   if event.has_conn_info else 0
+        dst_port = event.dst_port if event.has_conn_info else 0
+
+        # Build a collision-free request-id: <method>_<16-char hash>
+        # Hash input: src_ip + src_port + current nanosecond timestamp.
+        _hash_src  = f"{src_ip}:{src_port}:{time.time_ns()}".encode()
+        uid        = hashlib.sha256(_hash_src).hexdigest()[:16]
+        request_id = f"{method}_seq{seq_id}_{uid}"
+
+        self.update_resource_tracking(request_id, tid,
+                                      src_ip, src_port, dst_ip, dst_port)
+        self._flush_pending_conn_events(tid, request_id)
+        # Do NOT call complete_resource_tracking here.
+        # The server spawns one thread per connection; that thread exits after
+        # replying, which fires handle_exit_event → complete_resource_tracking
+        # (thread_exit=True) — exactly the same path as SSL requests.
+
     def run(self):
         print("="*60)
         print("🔍 INTEGRATED FULL SNIFFER (FIXED + IO + CPU BURSTS)".center(60))
@@ -558,7 +650,7 @@ class IntegratedSnifferFull:
 
         num_cpus = os.cpu_count() or 128
         bpf_source = load_bpf_program(num_cpus)
-        self.bpf = BPF(text=bpf_source)
+        self.bpf = BPF(text=bpf_source, cflags=["-Wno-array-bounds"])
 
         # Populate the target_pids map so kernel filters on all registered PIDs
         pid_map = self.bpf.get_table("target_pids")
@@ -585,10 +677,11 @@ class IntegratedSnifferFull:
 
         #register callbacks from ebpf programs to our python functions
         _no_lost = lambda lost, *_: None   # silence "Possibly lost N samples"
-        self.bpf["ssl_events"].open_perf_buffer(self.handle_ssl_event,   lost_cb=_no_lost)
-        self.bpf["mem_events"].open_perf_buffer(self.handle_mem_event,   lost_cb=_no_lost)
-        self.bpf["exit_events"].open_perf_buffer(self.handle_exit_event, lost_cb=_no_lost)
-        self.bpf["conn_events"].open_perf_buffer(self.handle_conn_event, lost_cb=_no_lost)
+        self.bpf["ssl_events"].open_perf_buffer(self.handle_ssl_event,     lost_cb=_no_lost)
+        self.bpf["mem_events"].open_perf_buffer(self.handle_mem_event,     lost_cb=_no_lost)
+        self.bpf["exit_events"].open_perf_buffer(self.handle_exit_event,   lost_cb=_no_lost)
+        self.bpf["conn_events"].open_perf_buffer(self.handle_conn_event,   lost_cb=_no_lost)
+        self.bpf["thrift_events"].open_perf_buffer(self.handle_thrift_event, lost_cb=_no_lost)
         
         while True:
             try:

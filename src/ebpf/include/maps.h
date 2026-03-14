@@ -43,3 +43,9 @@ BPF_PERF_OUTPUT(conn_events);
 BPF_HASH(ssl_read_args, u64, void *);
 BPF_PERCPU_ARRAY(event_scratch, struct ssl_data_event_t, 1);
 BPF_HASH(ssl_read_ex_args, u64, struct ssl_read_ex_args_t);
+
+// Thrift Protocol Interception (DeathStarBench / plain-TCP RPC)
+// Buffer pointer saved at sys_enter_recv* so the exit handler can read it.
+BPF_HASH(thrift_recv_args, u32, struct thrift_recv_args_t);
+BPF_PERF_OUTPUT(thrift_events);
+BPF_PERCPU_ARRAY(thrift_scratch, struct thrift_event_t, 1);

@@ -164,3 +164,32 @@ struct conn_event_t {
     u16 src_port;
     u16 dst_port;
 };
+
+// ═══════════════════════════════════════════════════════════════
+// THRIFT PROTOCOL INTERCEPTION (for DeathStarBench / plain-TCP RPC)
+// ═══════════════════════════════════════════════════════════════
+
+#define THRIFT_CAPTURE_SIZE 256
+
+// Saved at sys_enter_recvfrom / sys_enter_read so the exit handler
+// can read the user buffer and check for the Thrift magic bytes.
+struct thrift_recv_args_t {
+    u32 fd;
+    void *buf;
+};
+
+// Sent to userspace for every recv() that begins with a valid Thrift
+// strict-binary framed (or unframed) message header.
+struct thrift_event_t {
+    u32 pid;
+    u32 tid;
+    char comm[TASK_COMM_LEN];
+    u32 src_ip;
+    u32 dst_ip;
+    u16 src_port;
+    u16 dst_port;
+    u8  has_conn_info;
+    u8  _pad[3];
+    u32 data_len;
+    u8  data[THRIFT_CAPTURE_SIZE];
+};
