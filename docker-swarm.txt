@@ -8,3 +8,43 @@ To add a worker to this swarm, run the following command:
     docker swarm join --token SWMTKN-1-4oml4z0xzrxpf9mfo5ztij1ozls8afmr7buaqs1vowosw9396i-8fm7qb20a8xo8petiav3xs25c 10.5.30.91:2377
 
 To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
+
+
+___________________________________________________________________________________________
+(.91)
+
+utkalika-ibm@swarm-node-2 [02:37:59 AM IST] [~/Hrushikesh/MTP-pvt/DSB/socialNetwork] [master]
+-> % docker network create --driver overlay --attachable social-network-overlay
+
+fjh319i8j20qdw6dovy06isx1
+
+utkalika-ibm@swarm-node-2 [02:34:56 AM IST] [~/Hrushikesh/MTP-pvt/DSB/socialNetwork] [master]
+-> % docker-compose -f docker-compose-node1.yml up -d
+
+[+] Running 6/6
+ ⠿ jaeger-agent Pulled                                                                      9.5s
+   ⠿ 2d35ebdb57d9 Pull complete                                                             2.0s
+   ⠿ 1b88e4b47f1c Pull complete                                                             2.1s
+   ⠿ bb428e799734 Pull complete                                                             2.2s
+   ⠿ e52dc8c18e3f Pull complete                                                             4.8s
+   ⠿ 7dbec0deab4e Pull complete     
+
+___________________________________________________________________________________________
+(.92)
+
+utkalika-ibm@swarm-node-3 [02:42:05 AM IST] [~/Hrushikesh/MTP-pvt/DSB/socialNetwork] [master]
+-> % docker run -d --name keep-network-alive --network social-network-overlay alpine tail -f /dev/null
+
+cd646e6ff23fe4915e714937aabf50586aa76441c20322a62e66180837ab868f
+utkalika-ibm@swarm-node-3 [02:43:14 AM IST] [~/Hrushikesh/MTP-pvt/DSB/socialNetwork] [master]
+-> % docker-compose -f docker-compose-node2.yml up -d
+
+[+] Running 8/8
+ ⠿ Container socialnetwork-user-mention-service-1  Started                                   3.3s
+ ⠿ Container socialnetwork-media-mongodb-1         Started                                   3.2s
+ ⠿ Container socialnetwork-user-memcached-1        Started                                   3.7s
+ ⠿ Container socialnetwork-unique-id-service-1     Started                                   3.4s
+ ⠿ Container socialnetwork-media-service-1         Started                                   2.9s
+ ⠿ Container socialnetwork-user-service-1          Started                                   3.5s
+ ⠿ Container socialnetwork-user-mongodb-1          Started                                   3.1s
+ ⠿ Container socialnetwork-media-memcached-1       Started  
