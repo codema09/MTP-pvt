@@ -1,0 +1,50 @@
+version: '3.9'
+services:
+  user-service:
+    image: deathstarbench/social-network-microservices:latest
+    hostname: user-service
+    restart: always
+    entrypoint: UserService
+    volumes:
+    - ./config:/social-network-microservices/config
+  user-memcached:
+    image: memcached
+    hostname: user-memcached
+    restart: always
+  user-mongodb:
+    image: mongo:4.4.6
+    hostname: user-mongodb
+    restart: always
+  user-mention-service:
+    image: deathstarbench/social-network-microservices:latest
+    hostname: user-mention-service
+    restart: always
+    entrypoint: UserMentionService
+    volumes:
+    - ./config:/social-network-microservices/config
+  unique-id-service:
+    image: deathstarbench/social-network-microservices:latest
+    hostname: unique-id-service
+    restart: always
+    entrypoint: UniqueIdService
+    volumes:
+    - ./config:/social-network-microservices/config
+  media-service:
+    image: deathstarbench/social-network-microservices:latest
+    hostname: media-service
+    restart: always
+    entrypoint: MediaService
+    volumes:
+    - ./config:/social-network-microservices/config
+  media-memcached:
+    image: memcached
+    hostname: media-memcached
+    restart: always
+  media-mongodb:
+    image: mongo:4.4.6
+    hostname: media-mongodb
+    restart: always
+networks:
+  default:
+    external: true
+    name: social-network-overlay

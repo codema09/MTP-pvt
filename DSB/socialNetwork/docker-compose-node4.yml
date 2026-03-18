@@ -1,0 +1,32 @@
+version: '3.9'
+services:
+  home-timeline-service:
+    image: deathstarbench/social-network-microservices:latest
+    hostname: home-timeline-service
+    restart: always
+    entrypoint: HomeTimelineService
+    volumes:
+    - ./config:/social-network-microservices/config
+  home-timeline-redis:
+    image: redis
+    hostname: home-timeline-redis
+    restart: always
+  user-timeline-service:
+    image: deathstarbench/social-network-microservices:latest
+    hostname: user-timeline-service
+    restart: always
+    entrypoint: UserTimelineService
+    volumes:
+    - ./config:/social-network-microservices/config
+  user-timeline-redis:
+    image: redis
+    hostname: user-timeline-redis
+    restart: always
+  user-timeline-mongodb:
+    image: mongo:4.4.6
+    hostname: user-timeline-mongodb
+    restart: always
+networks:
+  default:
+    external: true
+    name: social-network-overlay

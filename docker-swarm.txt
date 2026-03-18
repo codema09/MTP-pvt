@@ -1,0 +1,10 @@
+utkalika-ibm@swarm-node-2 [02:23:25 AM IST] [~] 
+-> % docker swarm init --advertise-addr 10.5.30.91
+
+Swarm initialized: current node (iwv3r4wa0ejk670cce1vef5v9) is now a manager.
+
+To add a worker to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-4oml4z0xzrxpf9mfo5ztij1ozls8afmr7buaqs1vowosw9396i-8fm7qb20a8xo8petiav3xs25c 10.5.30.91:2377
+
+To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.

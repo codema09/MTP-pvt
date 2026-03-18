@@ -1,0 +1,64 @@
+version: '3.9'
+services:
+  nginx-thrift:
+    image: yg397/openresty-thrift:xenial
+    hostname: nginx-thrift
+    ports:
+    - 8080:8080
+    restart: always
+    volumes:
+    - ./nginx-web-server/lua-scripts:/usr/local/openresty/nginx/lua-scripts
+    - ./nginx-web-server/pages:/usr/local/openresty/nginx/pages
+    - ./nginx-web-server/conf/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+    - ./nginx-web-server/jaeger-config.json:/usr/local/openresty/nginx/jaeger-config.json
+    - ./gen-lua:/gen-lua
+    - ./docker/openresty-thrift/lua-thrift:/usr/local/openresty/lualib/thrift
+  media-frontend:
+    image: yg397/media-frontend:xenial
+    hostname: media-frontend
+    ports:
+    - 8081:8080
+    restart: always
+    volumes:
+    - ./media-frontend/lua-scripts:/usr/local/openresty/nginx/lua-scripts
+    - ./media-frontend/conf/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+  jaeger-agent:
+    image: jaegertracing/all-in-one:latest
+    ports:
+    - 16686:16686
+    restart: always
+    environment:
+    - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+  compose-post-service:
+    image: deathstarbench/social-network-microservices:latest
+    hostname: compose-post-service
+    restart: always
+    entrypoint: ComposePostService
+    volumes:
+    - ./config:/social-network-microservices/config
+  text-service:
+    image: deathstarbench/social-network-microservices:latest
+    hostname: text-service
+    restart: always
+    entrypoint: TextService
+    volumes:
+    - ./config:/social-network-microservices/config
+  url-shorten-service:
+    image: deathstarbench/social-network-microservices:latest
+    hostname: url-shorten-service
+    restart: always
+    entrypoint: UrlShortenService
+    volumes:
+    - ./config:/social-network-microservices/config
+  url-shorten-memcached:
+    image: memcached
+    hostname: url-shorten-memcached
+    restart: always
+  url-shorten-mongodb:
+    image: mongo:4.4.6
+    hostname: url-shorten-mongodb
+    restart: always
+networks:
+  default:
+    external: true
+    name: social-network-overlay
