@@ -10,7 +10,7 @@ Integrated HTTPS Server Sniffer & Resource Profiler (FINAL FIXED + IO + Disk + C
 Usage: sudo python3 integrated_sniffer_full.py -p <PID1> [PID2 ...]
 """
 
-from bcc import BPF, PerfType, PerfHWConfig
+from bcc import BPF, PerfType, PerfHWConfig, PerfSWConfig
 import hashlib
 import socket
 import struct
@@ -899,8 +899,16 @@ class IntegratedSnifferFull:
         ssl_lib = BPF.find_library("ssl") or "/usr/lib/libssl.so.3"
         
         # Open Hardware Perf Counters for Cycles and Instructions
-        self.bpf["perf_cycles"].open_perf_event(PerfType.HARDWARE, PerfHWConfig.CPU_CYCLES)
-        self.bpf["perf_instructions"].open_perf_event(PerfType.HARDWARE, PerfHWConfig.INSTRUCTIONS)
+        # Try binding Hardware vPMU CPU Counters natively for bare-metal performance
+        try:
+            self.bpf["perf_cycles"].open_perf_event(PerfType.HARDWARE, PerfHWConfig.CPU_CYCLES)
+            self.bpf["perf_instructions"].open_perf_event(PerfType.HARDWARE, PerfHWConfig.INSTRUCTIONS)
+        except Exception as e:
+            # Automatic graceful fallback for Cloud VMs missing HW PMU capabilities!
+            print("[\033[93mWARNING\033[0m] Hardware vPMU Counters missing (VM Environment Detected).")
+            print("[\033[93mWARNING\033[0m] BPF is automatically falling back to kernel Software Clocks...")
+            self.bpf["perf_cycles"].open_perf_event(PerfType.SOFTWARE, PerfSWConfig.CPU_CLOCK)
+            self.bpf["perf_instructions"].open_perf_event(PerfType.SOFTWARE, PerfSWConfig.TASK_CLOCK)
         
         self.bpf.attach_uprobe(name=ssl_lib, sym="SSL_read", fn_name="probe_ssl_read_enter")
         self.bpf.attach_uretprobe(name=ssl_lib, sym="SSL_read", fn_name="probe_ssl_read_exit")
