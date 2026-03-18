@@ -35,7 +35,8 @@ int probe_ssl_read_exit(struct pt_regs *ctx) {
 
     u32 copy_len = (u32)ret;
     if (copy_len > MAX_HEADER_SIZE) copy_len = MAX_HEADER_SIZE;
-    bpf_probe_read_user(&evt->data, copy_len, buf);
+    if (copy_len > MAX_HEADER_SIZE) copy_len = MAX_HEADER_SIZE;
+    bpf_probe_read_user(&evt->data, MAX_HEADER_SIZE, buf);
     evt->data_len = copy_len;
 
     u32 *fd_ptr = tid_to_fd.lookup(&pid_tgid);
@@ -118,7 +119,7 @@ int probe_ssl_read_ex_exit(struct pt_regs *ctx) {
 
     u32 copy_len = (u32)bytes_read;
     if (copy_len > MAX_HEADER_SIZE) copy_len = MAX_HEADER_SIZE;
-    bpf_probe_read_user(&evt->data, copy_len, buf);
+    bpf_probe_read_user(&evt->data, MAX_HEADER_SIZE, buf);
     evt->data_len = copy_len;
 
     ssl_read_ex_args.delete(&pid_tgid);
