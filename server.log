@@ -1,8 +1,0 @@
-Traceback (most recent call last):
-  File "/home/khr/homefr/MTP/ebpf/bcc-latest/SERVER/forking_work_server.py", line 138, in <module>
-    main()
-    ~~~~^^
-  File "/home/khr/homefr/MTP/ebpf/bcc-latest/SERVER/forking_work_server.py", line 113, in main
-    bindsocket.bind(('0.0.0.0', 8443))
-    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
-OSError: [Errno 98] Address already in use

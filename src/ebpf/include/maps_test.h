@@ -6,7 +6,7 @@
 BPF_HASH(target_pids, u32, u32);
 
 // Connection & Request Tracking
-BPF_HASH(fd_to_conn, u64, struct conn_tuple_t);
+BPF_HASH(fd_to_conn, u32, struct conn_tuple_t);
 BPF_HASH(tid_to_fd, u64, u32);
 BPF_HASH(request_resources, struct request_id_key_t, struct resource_usage_t);
 BPF_HASH(tid_to_request_id, u32, struct request_id_key_t);
@@ -56,7 +56,6 @@ BPF_HASH(ssl_read_ex_args, u64, struct ssl_read_ex_args_t);
 BPF_HASH(thrift_recv_args, u32, struct thrift_recv_args_t);
 BPF_PERF_OUTPUT(thrift_events);
 BPF_PERCPU_ARRAY(thrift_scratch, struct thrift_event_t, 1);
-BPF_PERF_OUTPUT(thrift_out_events);
-BPF_PERCPU_ARRAY(thrift_out_scratch, struct thrift_out_event_t, 1);
 BPF_PERCPU_ARRAY(resource_usage_scratch, struct resource_usage_t, 1);
 BPF_PERCPU_ARRAY(req_id_key_scratch, struct request_id_key_t, 1);
+

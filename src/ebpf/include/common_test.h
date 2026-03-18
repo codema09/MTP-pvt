@@ -55,7 +55,6 @@ struct user_info_t {
 struct resource_usage_t {
     char request_id[MAX_REQUEST_ID_LEN];
     u32 tid;
-    u32 pid;
     u64 start_time_ns;
     u64 end_time_ns;
     u64 duration_ns;
@@ -83,13 +82,6 @@ struct resource_usage_t {
     u32 cpu_burst_count;
     u64 cpu_cycles_total;
     u64 cpu_instructions_total;
-    u64 first_cpu_burst_ns;
-    u64 last_cpu_burst_ns;
-    
-    // I/O METRICS
-    u64 first_recv_ns;
-    u64 last_send_ns;
-    u64 payload_req_id;
 };
 
 struct request_entry_t {
@@ -164,8 +156,6 @@ struct pre_assign_cpu_t {
     u64 cycles;
     u64 instructions;
     u32 burst_count;
-    u64 first_cpu_burst_ns;
-    u64 last_cpu_burst_ns;
 };
 
 struct cpu_burst_event_t {
@@ -198,7 +188,7 @@ struct conn_event_t {
 #define THRIFT_CAPTURE_SIZE 256
 
 // Saved at sys_enter_recvfrom / sys_enter_read so the exit handler
-// can read the// Buffer pointer saved at sys_enter_recv* so the exit handler can read it.
+// can read the user buffer and check for the Thrift magic bytes.
 struct thrift_recv_args_t {
     u32 fd;
     void *buf;
@@ -218,20 +208,6 @@ struct thrift_event_t {
     u8  has_request_id;
     u8  _pad[2];
     char request_id[MAX_REQUEST_ID_LEN];
-    u64 payload_req_id;
     u32 data_len;
     u8  data[THRIFT_CAPTURE_SIZE];
-};
-
-struct thrift_out_event_t {
-    u32 tid;
-    char parent_request_id[MAX_REQUEST_ID_LEN];
-    char method[32];
-    u32 seq_id;
-    u32 src_ip;
-    u32 dst_ip;
-    u16 src_port;
-    u16 dst_port;
-    u8  has_request_id;
-    u64 payload_req_id;
 };

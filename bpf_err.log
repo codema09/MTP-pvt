@@ -1,0 +1,52 @@
+/virtual/main.c:360:26: error: no member named 'first_cpu_burst_ns' in 'struct pre_assign_cpu_t'
+  360 |                 if (pre->first_cpu_burst_ns == 0 || start_data->ts < pre->first_cpu_burst_ns) {
+      |                     ~~~  ^
+/virtual/main.c:360:75: error: no member named 'first_cpu_burst_ns' in 'struct pre_assign_cpu_t'
+  360 |                 if (pre->first_cpu_burst_ns == 0 || start_data->ts < pre->first_cpu_burst_ns) {
+      |                                                                      ~~~  ^
+/virtual/main.c:361:26: error: no member named 'first_cpu_burst_ns' in 'struct pre_assign_cpu_t'
+  361 |                     pre->first_cpu_burst_ns = start_data->ts;
+      |                     ~~~  ^
+/virtual/main.c:363:35: error: no member named 'last_cpu_burst_ns' in 'struct pre_assign_cpu_t'
+  363 |                 if (now_ts > pre->last_cpu_burst_ns) {
+      |                              ~~~  ^
+/virtual/main.c:364:26: error: no member named 'last_cpu_burst_ns' in 'struct pre_assign_cpu_t'
+  364 |                     pre->last_cpu_burst_ns = now_ts;
+      |                     ~~~  ^
+/virtual/main.c:372:25: error: no member named 'first_cpu_burst_ns' in 'struct pre_assign_cpu_t'
+  372 |                 new_pre.first_cpu_burst_ns = start_data->ts;
+      |                 ~~~~~~~ ^
+/virtual/main.c:373:25: error: no member named 'last_cpu_burst_ns' in 'struct pre_assign_cpu_t'
+  373 |                 new_pre.last_cpu_burst_ns = now_ts;
+      |                 ~~~~~~~ ^
+/virtual/main.c:389:36: error: no member named 'first_cpu_burst_ns' in 'struct pre_assign_cpu_t'
+  389 |                         if (flush->first_cpu_burst_ns > 0 &&
+      |                             ~~~~~  ^
+/virtual/main.c:390:35: error: no member named 'first_cpu_burst_ns' in 'struct resource_usage_t'
+  390 |                             (res->first_cpu_burst_ns == 0 || flush->first_cpu_burst_ns < res->first_cpu_burst_ns)) {
+      |                              ~~~  ^
+/virtual/main.c:390:69: error: no member named 'first_cpu_burst_ns' in 'struct pre_assign_cpu_t'
+  390 |                             (res->first_cpu_burst_ns == 0 || flush->first_cpu_burst_ns < res->first_cpu_burst_ns)) {
+      |                                                              ~~~~~  ^
+/virtual/main.c:390:95: error: no member named 'first_cpu_burst_ns' in 'struct resource_usage_t'
+  390 |                             (res->first_cpu_burst_ns == 0 || flush->first_cpu_burst_ns < res->first_cpu_burst_ns)) {
+      |                                                                                          ~~~  ^
+/virtual/main.c:391:34: error: no member named 'first_cpu_burst_ns' in 'struct resource_usage_t'
+  391 |                             res->first_cpu_burst_ns = flush->first_cpu_burst_ns;
+      |                             ~~~  ^
+/virtual/main.c:391:62: error: no member named 'first_cpu_burst_ns' in 'struct pre_assign_cpu_t'
+  391 |                             res->first_cpu_burst_ns = flush->first_cpu_burst_ns;
+      |                                                       ~~~~~  ^
+/virtual/main.c:393:36: error: no member named 'last_cpu_burst_ns' in 'struct pre_assign_cpu_t'
+  393 |                         if (flush->last_cpu_burst_ns > res->last_cpu_burst_ns) {
+      |                             ~~~~~  ^
+/virtual/main.c:393:61: error: no member named 'last_cpu_burst_ns' in 'struct resource_usage_t'
+  393 |                         if (flush->last_cpu_burst_ns > res->last_cpu_burst_ns) {
+      |                                                        ~~~  ^
+/virtual/main.c:394:34: error: no member named 'last_cpu_burst_ns' in 'struct resource_usage_t'
+  394 |                             res->last_cpu_burst_ns = flush->last_cpu_burst_ns;
+      |                             ~~~  ^
+/virtual/main.c:394:61: error: no member named 'last_cpu_burst_ns' in 'struct pre_assign_cpu_t'
+  394 |                             res->last_cpu_burst_ns = flush->last_cpu_burst_ns;
+      |                                                      ~~~~~  ^
+17 errors generated.

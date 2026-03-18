@@ -1,0 +1,259 @@
+================================================================================
+                          DISTRIBUTED CALL GRAPH (DAG)                          
+================================================================================
+Machines reported: 1  |  Total requests: 110  |  Total edges: 101  |  Unmatched: 50
+
+└── ComposePost_seq0_2b6d06036edd0632  [172.18.0.19:9090] (6.75ms) @archlinux | socialnetwork-compose-post-service-1(2750)
+    ├── ComposeMedia_seq0_e09d802f8c9c4219  [172.18.0.14:9090] (0.07ms) @archlinux | socialnetwork-media-service-1(2485)
+    ├── WriteHomeTimeline_seq0_aca672ad517a6ca1  [172.18.0.12:9090] (0.85ms) @archlinux | socialnetwork-home-timeline-service-1(2115)
+    │   └── GetFollowers_seq0_44b8ea7866e4d8f5  [172.18.0.15:9090] (0.75ms) @archlinux | socialnetwork-social-graph-service-1(2537)
+    ├── ComposeText_seq0_d332d7d20948829a  [172.18.0.18:9090] (1.08ms) @archlinux | socialnetwork-text-service-1(2583)
+    │   ├── ComposeUrls_seq0_8e0d9c23f9694943  [172.18.0.10:9090] (0.07ms) @archlinux | socialnetwork-url-shorten-service-1(2176)
+    │   └── ComposeUserMentions_seq0_8af91cb0c323f72e  [172.18.0.13:9090] (0.07ms) @archlinux | socialnetwork-user-mention-service-1(2437)
+    ├── WriteUserTimeline_seq0_0508bec20e2d7c74  [172.18.0.16:9090] (0.46ms) @archlinux | socialnetwork-user-timeline-service-1(2631)
+    ├── StorePost_seq0_a81da0d009ab5959  [172.18.0.9:9090] (0.33ms) @archlinux | socialnetwork-post-storage-service-1(2055)
+    ├── ComposeUniqueId_seq0_11a12983d4bc7302  [172.18.0.8:9090] (0.07ms) @archlinux | socialnetwork-unique-id-service-1(2276)
+    └── ComposeCreatorWithUserId_seq0_98cfb870fe3640f4  [172.18.0.11:9090] (0.07ms) @archlinux | socialnetwork-user-service-1(2218)
+
+└── ComposePost_seq0_3d32dee6d2910716  [172.18.0.19:9090] (10015.44ms) @archlinux | socialnetwork-compose-post-service-1(2750)
+    ├── ComposeCreatorWithUserId_seq0_c67b03391344273a  [172.18.0.11:9090] (0.07ms) @archlinux | socialnetwork-user-service-1(2218)
+    ├── WriteUserTimeline_seq0_14229dad613f9d00  [172.18.0.16:9090] (0.44ms) @archlinux | socialnetwork-user-timeline-service-1(2631)
+    ├── WriteHomeTimeline_seq0_f560e5e60479b429  [172.18.0.12:9090] (0.93ms) @archlinux | socialnetwork-home-timeline-service-1(2115)
+    │   └── GetFollowers_seq0_6ad3282572e080ed  [172.18.0.15:9090] (0.46ms) @archlinux | socialnetwork-social-graph-service-1(2537)
+    ├── StorePost_seq0_4dd0766b3b955e08  [172.18.0.9:9090] (0.32ms) @archlinux | socialnetwork-post-storage-service-1(2055)
+    ├── ComposeMedia_seq0_a08312f072d2df7e  [172.18.0.14:9090] (0.11ms) @archlinux | socialnetwork-media-service-1(2485)
+    ├── ComposeUniqueId_seq0_a52bbcc2f91d740e  [172.18.0.8:9090] (0.08ms) @archlinux | socialnetwork-unique-id-service-1(2276)
+    └── ComposeText_seq0_7041f47216413c1d  [172.18.0.18:9090] (1.33ms) @archlinux | socialnetwork-text-service-1(2583)
+        ├── ComposeUrls_seq0_849c3e204de8c229  [172.18.0.10:9090] (0.07ms) @archlinux | socialnetwork-url-shorten-service-1(2176)
+        └── ComposeUserMentions_seq0_16a404e09c70a48c  [172.18.0.13:9090] (0.16ms) @archlinux | socialnetwork-user-mention-service-1(2437)
+
+└── ComposePost_seq0_595d69777c674928  [172.18.0.19:9090] (10014.34ms) @archlinux | socialnetwork-compose-post-service-1(2750)
+    ├── WriteUserTimeline_seq0_ce55968e24cbf21d  [172.18.0.16:9090] (0.70ms) @archlinux | socialnetwork-user-timeline-service-1(2631)
+    ├── WriteHomeTimeline_seq0_3fb439bd1070e1d8  [172.18.0.12:9090] (1.82ms) @archlinux | socialnetwork-home-timeline-service-1(2115)
+    │   └── GetFollowers_seq0_ff8240b60872fbf7  [172.18.0.15:9090] (0.42ms) @archlinux | socialnetwork-social-graph-service-1(2537)
+    ├── ComposeUniqueId_seq0_4363baac9d3707e7  [172.18.0.8:9090] (0.08ms) @archlinux | socialnetwork-unique-id-service-1(2276)
+    ├── ComposeCreatorWithUserId_seq0_ce44c7983803d2ba  [172.18.0.11:9090] (0.06ms) @archlinux | socialnetwork-user-service-1(2218)
+    ├── StorePost_seq0_6e3708257aeb35f8  [172.18.0.9:9090] (0.30ms) @archlinux | socialnetwork-post-storage-service-1(2055)
+    ├── ComposeText_seq0_e3a5c19fe26b07d4  [172.18.0.18:9090] (0.36ms) @archlinux | socialnetwork-text-service-1(2583)
+    │   ├── ComposeUserMentions_seq0_6d235c1e129d418d  [172.18.0.13:9090] (0.06ms) @archlinux | socialnetwork-user-mention-service-1(2437)
+    │   └── ComposeUrls_seq0_a2807cb202961a84  [172.18.0.10:9090] (0.07ms) @archlinux | socialnetwork-url-shorten-service-1(2176)
+    └── ComposeMedia_seq0_89e6cb26bb9d4577  [172.18.0.14:9090] (0.07ms) @archlinux | socialnetwork-media-service-1(2485)
+
+└── ComposePost_seq0_68d41c752bcb30d9  [172.18.0.19:9090] (6.83ms) @archlinux | socialnetwork-compose-post-service-1(2750)
+    ├── WriteUserTimeline_seq0_45cbfa401f532049  [172.18.0.16:9090] (0.63ms) @archlinux | socialnetwork-user-timeline-service-1(2631)
+    ├── WriteHomeTimeline_seq0_03bf7aa14ea1926f  [172.18.0.12:9090] (1.17ms) @archlinux | socialnetwork-home-timeline-service-1(2115)
+    │   └── GetFollowers_seq0_b0ed2f97d54feade  [172.18.0.15:9090] (0.67ms) @archlinux | socialnetwork-social-graph-service-1(2537)
+    ├── StorePost_seq0_26d5edade07fefce  [172.18.0.9:9090] (0.28ms) @archlinux | socialnetwork-post-storage-service-1(2055)
+    ├── ComposeCreatorWithUserId_seq0_3bed8350deaea25b  [172.18.0.11:9090] (0.06ms) @archlinux | socialnetwork-user-service-1(2218)
+    ├── ComposeUniqueId_seq0_89712abcd42bab3f  [172.18.0.8:9090] (0.07ms) @archlinux | socialnetwork-unique-id-service-1(2276)
+    ├── ComposeMedia_seq0_7ffb2f3c481219eb  [172.18.0.14:9090] (0.11ms) @archlinux | socialnetwork-media-service-1(2485)
+    └── ComposeText_seq0_726cece833c06b4e  [172.18.0.18:9090] (0.38ms) @archlinux | socialnetwork-text-service-1(2583)
+        ├── ComposeUserMentions_seq0_75d0f8b08f13c151  [172.18.0.13:9090] (0.10ms) @archlinux | socialnetwork-user-mention-service-1(2437)
+        └── ComposeUrls_seq0_2d654089098bd1f8  [172.18.0.10:9090] (0.07ms) @archlinux | socialnetwork-url-shorten-service-1(2176)
+
+└── ComposePost_seq0_7ba2c42ea827743b  [172.18.0.19:9090] (10016.95ms) @archlinux | socialnetwork-compose-post-service-1(2750)
+    ├── ComposeText_seq0_bd519fceb965b9b3  [172.18.0.18:9090] (1.06ms) @archlinux | socialnetwork-text-service-1(2583)
+    │   ├── ComposeUserMentions_seq0_06aed9f81cac4760  [172.18.0.13:9090] (0.14ms) @archlinux | socialnetwork-user-mention-service-1(2437)
+    │   └── ComposeUrls_seq0_4137471582eabf04  [172.18.0.10:9090] (0.40ms) @archlinux | socialnetwork-url-shorten-service-1(2176)
+    ├── ComposeMedia_seq0_86b46a08c31edfaa  [172.18.0.14:9090] (0.20ms) @archlinux | socialnetwork-media-service-1(2485)
+    ├── StorePost_seq0_56f419f9e5bb0772  [172.18.0.9:9090] (0.64ms) @archlinux | socialnetwork-post-storage-service-1(2055)
+    ├── ComposeUniqueId_seq0_932e8ebe09e09ee6  [172.18.0.8:9090] (0.20ms) @archlinux | socialnetwork-unique-id-service-1(2276)
+    ├── WriteHomeTimeline_seq0_49eca90f69a774bf  [172.18.0.12:9090] (2.60ms) @archlinux | socialnetwork-home-timeline-service-1(2115)
+    │   ├── GetFollowers_seq0_44b8ea7866e4d8f5  [172.18.0.15:9090] (0.75ms) @archlinux | socialnetwork-social-graph-service-1(2537)
+    │   │       (cycle detected, skipping)
+    │   └── GetFollowers_seq0_416374092dbfbb04  [172.18.0.15:9090] (0.88ms) @archlinux | socialnetwork-social-graph-service-1(2537)
+    ├── ComposeCreatorWithUserId_seq0_3b3df1edda87a79d  [172.18.0.11:9090] (0.34ms) @archlinux | socialnetwork-user-service-1(2218)
+    └── WriteUserTimeline_seq0_2ea9ce9cac908f2f  [172.18.0.16:9090] (1.24ms) @archlinux | socialnetwork-user-timeline-service-1(2631)
+
+└── ComposePost_seq0_7bed1358b23e26fe  [172.18.0.19:9090] (6.54ms) @archlinux | socialnetwork-compose-post-service-1(2750)
+    ├── ComposeUniqueId_seq0_b00090cd90dd5c7d  [172.18.0.8:9090] (0.48ms) @archlinux | socialnetwork-unique-id-service-1(2276)
+    ├── ComposeCreatorWithUserId_seq0_b3734ceb26f9605a  [172.18.0.11:9090] (0.08ms) @archlinux | socialnetwork-user-service-1(2218)
+    ├── ComposeText_seq0_b57c7888ad506cc3  [172.18.0.18:9090] (0.70ms) @archlinux | socialnetwork-text-service-1(2583)
+    │   ├── ComposeUrls_seq0_059b8d59c03f1f41  [172.18.0.10:9090] (0.05ms) @archlinux | socialnetwork-url-shorten-service-1(2176)
+    │   └── ComposeUserMentions_seq0_a5a35b1d3e36d3e9  [172.18.0.13:9090] (0.06ms) @archlinux | socialnetwork-user-mention-service-1(2437)
+    ├── WriteUserTimeline_seq0_3847173828bf47d3  [172.18.0.16:9090] (1.16ms) @archlinux | socialnetwork-user-timeline-service-1(2631)
+    ├── ComposeMedia_seq0_9e406a703cf43abb  [172.18.0.14:9090] (0.07ms) @archlinux | socialnetwork-media-service-1(2485)
+    ├── WriteHomeTimeline_seq0_4993e5ccc14fbb7b  [172.18.0.12:9090] (2.30ms) @archlinux | socialnetwork-home-timeline-service-1(2115)
+    │   └── GetFollowers_seq0_31cfe1629ca8650a  [172.18.0.15:9090] (1.44ms) @archlinux | socialnetwork-social-graph-service-1(2537)
+    └── StorePost_seq0_b57bca38d6c99fda  [172.18.0.9:9090] (1.20ms) @archlinux | socialnetwork-post-storage-service-1(2055)
+
+└── ComposePost_seq0_8dffd522a5658cd6  [172.18.0.19:9090] (10015.30ms) @archlinux | socialnetwork-compose-post-service-1(2750)
+    ├── ComposeUniqueId_seq0_e91598da7b61d7e5  [172.18.0.8:9090] (0.38ms) @archlinux | socialnetwork-unique-id-service-1(2276)
+    ├── StorePost_seq0_58717e752bac4f14  [172.18.0.9:9090] (0.87ms) @archlinux | socialnetwork-post-storage-service-1(2055)
+    ├── WriteUserTimeline_seq0_97b2b2d729b97a25  [172.18.0.16:9090] (1.28ms) @archlinux | socialnetwork-user-timeline-service-1(2631)
+    ├── ComposeMedia_seq0_fc4e81a302e39399  [172.18.0.14:9090] (0.25ms) @archlinux | socialnetwork-media-service-1(2485)
+    ├── ComposeText_seq0_b3cabffc5effcc5c  [172.18.0.18:9090] (1.10ms) @archlinux | socialnetwork-text-service-1(2583)
+    │   ├── ComposeUrls_seq0_142c4a9c1907d741  [172.18.0.10:9090] (0.23ms) @archlinux | socialnetwork-url-shorten-service-1(2176)
+    │   └── ComposeUserMentions_seq0_4642722fa46631ab  [172.18.0.13:9090] (0.28ms) @archlinux | socialnetwork-user-mention-service-1(2437)
+    ├── WriteHomeTimeline_seq0_830a45f438339f93  [172.18.0.12:9090] (1.81ms) @archlinux | socialnetwork-home-timeline-service-1(2115)
+    │   └── GetFollowers_seq0_254bdeb3bfb4158f  [172.18.0.15:9090] (1.22ms) @archlinux | socialnetwork-social-graph-service-1(2537)
+    └── ComposeCreatorWithUserId_seq0_1ee0e65409b8aa9a  [172.18.0.11:9090] (0.25ms) @archlinux | socialnetwork-user-service-1(2218)
+
+└── ComposePost_seq0_912a36cc9f8ef523  [172.18.0.19:9090] (5.72ms) @archlinux | socialnetwork-compose-post-service-1(2750)
+    ├── ComposeText_seq0_f3f15a4e53f77ce9  [172.18.0.18:9090] (0.90ms) @archlinux | socialnetwork-text-service-1(2583)
+    │   ├── ComposeUserMentions_seq0_4024429c7886064b  [172.18.0.13:9090] (0.07ms) @archlinux | socialnetwork-user-mention-service-1(2437)
+    │   └── ComposeUrls_seq0_113130e30ee42de1  [172.18.0.10:9090] (0.06ms) @archlinux | socialnetwork-url-shorten-service-1(2176)
+    ├── ComposeCreatorWithUserId_seq0_0e6fb6529f128536  [172.18.0.11:9090] (0.13ms) @archlinux | socialnetwork-user-service-1(2218)
+    ├── ComposeMedia_seq0_7e014736ebb5fd49  [172.18.0.14:9090] (0.17ms) @archlinux | socialnetwork-media-service-1(2485)
+    ├── ComposeUniqueId_seq0_2a5b5302ee755240  [172.18.0.8:9090] (0.14ms) @archlinux | socialnetwork-unique-id-service-1(2276)
+    ├── WriteUserTimeline_seq0_e1878ca583c8eb3c  [172.18.0.16:9090] (1.01ms) @archlinux | socialnetwork-user-timeline-service-1(2631)
+    ├── WriteHomeTimeline_seq0_d502663be8e20fc7  [172.18.0.12:9090] (1.34ms) @archlinux | socialnetwork-home-timeline-service-1(2115)
+    │   └── GetFollowers_seq0_65b3985f02e64435  [172.18.0.15:9090] (1.06ms) @archlinux | socialnetwork-social-graph-service-1(2537)
+    └── StorePost_seq0_e8ef74a34535a189  [172.18.0.9:9090] (0.31ms) @archlinux | socialnetwork-post-storage-service-1(2055)
+
+└── ComposePost_seq0_d5e50d55c09c2cf0  [172.18.0.19:9090] (7.00ms) @archlinux | socialnetwork-compose-post-service-1(2750)
+    ├── ComposeCreatorWithUserId_seq0_70ca3b0ba4f6a605  [172.18.0.11:9090] (0.19ms) @archlinux | socialnetwork-user-service-1(2218)
+    ├── WriteHomeTimeline_seq0_025773664d2b1f54  [172.18.0.12:9090] (1.70ms) @archlinux | socialnetwork-home-timeline-service-1(2115)
+    │   └── GetFollowers_seq0_851b967aecdc195f  [172.18.0.15:9090] (0.87ms) @archlinux | socialnetwork-social-graph-service-1(2537)
+    ├── ComposeUniqueId_seq0_2427418b1e4bc23b  [172.18.0.8:9090] (0.08ms) @archlinux | socialnetwork-unique-id-service-1(2276)
+    ├── ComposeMedia_seq0_3aa5ee03743f8e8e  [172.18.0.14:9090] (0.08ms) @archlinux | socialnetwork-media-service-1(2485)
+    ├── StorePost_seq0_6992c8ab2afef03c  [172.18.0.9:9090] (0.34ms) @archlinux | socialnetwork-post-storage-service-1(2055)
+    ├── WriteUserTimeline_seq0_038805a5911f8247  [172.18.0.16:9090] (0.82ms) @archlinux | socialnetwork-user-timeline-service-1(2631)
+    └── ComposeText_seq0_736f1c5ae695ca5a  [172.18.0.18:9090] (1.67ms) @archlinux | socialnetwork-text-service-1(2583)
+        ├── ComposeUserMentions_seq0_09064d5057f1cff4  [172.18.0.13:9090] (0.17ms) @archlinux | socialnetwork-user-mention-service-1(2437)
+        └── ComposeUrls_seq0_c6f8cd63a98c879e  [172.18.0.10:9090] (0.17ms) @archlinux | socialnetwork-url-shorten-service-1(2176)
+
+└── ComposePost_seq0_fe308773c749c85e  [172.18.0.19:9090] (10014.95ms) @archlinux | socialnetwork-compose-post-service-1(2750)
+    ├── WriteUserTimeline_seq0_afbe7f9676d769e9  [172.18.0.16:9090] (1.01ms) @archlinux | socialnetwork-user-timeline-service-1(2631)
+    ├── WriteHomeTimeline_seq0_4ee3158fb4605357  [172.18.0.12:9090] (1.16ms) @archlinux | socialnetwork-home-timeline-service-1(2115)
+    │   └── GetFollowers_seq0_ea0fe1935a081ed7  [172.18.0.15:9090] (0.46ms) @archlinux | socialnetwork-social-graph-service-1(2537)
+    ├── ComposeMedia_seq0_da1f6dadb586f65a  [172.18.0.14:9090] (0.05ms) @archlinux | socialnetwork-media-service-1(2485)
+    ├── ComposeCreatorWithUserId_seq0_dba3f1847fac2f21  [172.18.0.11:9090] (0.07ms) @archlinux | socialnetwork-user-service-1(2218)
+    ├── ComposeUniqueId_seq0_8210294771fd786b  [172.18.0.8:9090] (0.07ms) @archlinux | socialnetwork-unique-id-service-1(2276)
+    ├── StorePost_seq0_93dea5232a79fe26  [172.18.0.9:9090] (0.25ms) @archlinux | socialnetwork-post-storage-service-1(2055)
+    └── ComposeText_seq0_f5ae40412a05aa65  [172.18.0.18:9090] (0.96ms) @archlinux | socialnetwork-text-service-1(2583)
+        ├── ComposeUserMentions_seq0_5b446ed2236df20a  [172.18.0.13:9090] (0.07ms) @archlinux | socialnetwork-user-mention-service-1(2437)
+        └── ComposeUrls_seq0_2d027c8b1796a0f7  [172.18.0.10:9090] (0.06ms) @archlinux | socialnetwork-url-shorten-service-1(2176)
+
+
+================================================================================
+
+PER-REQUEST RESOURCE SUMMARY
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Request-ID                                         | Machine              | Service                                       | Latency(ms) |  CPU(ms) | Bursts |         Cycles | Virtual Mem(KB) | Peak Physical(KB) |  Send(KB) |  Recv(KB) | DiskRd(KB) | DiskWr(KB)
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ComposeCreatorWithUserId_seq0_0e6fb6529f128536     | archlinux            | socialnetwork-user-service-1(2218)            |       0.133 |    0.104 |      2 |        443,586 |             0.0 |               0.0 |       0.1 |       0.0 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_1ee0e65409b8aa9a     | archlinux            | socialnetwork-user-service-1(2218)            |       0.253 |    0.130 |      4 |        556,882 |             0.0 |               0.0 |       0.1 |       0.0 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_3b3df1edda87a79d     | archlinux            | socialnetwork-user-service-1(2218)            |       0.343 |    0.223 |      3 |        956,606 |             0.0 |               0.0 |       0.1 |       0.0 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_3bed8350deaea25b     | archlinux            | socialnetwork-user-service-1(2218)            |       0.061 |    0.061 |      1 |        255,526 |             0.0 |              32.0 |       0.1 |       0.0 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_70ca3b0ba4f6a605     | archlinux            | socialnetwork-user-service-1(2218)            |       0.194 |    0.132 |      2 |        565,516 |             0.0 |               0.0 |       0.1 |       0.0 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_98cfb870fe3640f4     | archlinux            | socialnetwork-user-service-1(2218)            |       0.070 |    0.070 |      1 |        299,456 |             0.0 |              32.0 |       0.1 |       0.2 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_b3734ceb26f9605a     | archlinux            | socialnetwork-user-service-1(2218)            |       0.076 |    0.076 |      1 |        322,131 |             0.0 |              32.0 |       0.1 |       0.0 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_c67b03391344273a     | archlinux            | socialnetwork-user-service-1(2218)            |       0.070 |    0.070 |      1 |        299,762 |             0.0 |              32.0 |       0.1 |       0.0 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_ce44c7983803d2ba     | archlinux            | socialnetwork-user-service-1(2218)            |       0.059 |    0.059 |      1 |        253,479 |             0.0 |              32.0 |       0.1 |       0.0 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_dba3f1847fac2f21     | archlinux            | socialnetwork-user-service-1(2218)            |       0.072 |    0.072 |      1 |        308,421 |             0.0 |              32.0 |       0.1 |       0.2 |        0.0 |        0.0
+ComposeMedia_seq0_3aa5ee03743f8e8e                 | archlinux            | socialnetwork-media-service-1(2485)           |       0.078 |    0.078 |      1 |        331,749 |             0.0 |              32.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeMedia_seq0_7e014736ebb5fd49                 | archlinux            | socialnetwork-media-service-1(2485)           |       0.171 |    0.129 |      2 |        551,518 |             0.0 |               0.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeMedia_seq0_7ffb2f3c481219eb                 | archlinux            | socialnetwork-media-service-1(2485)           |       0.111 |    0.111 |      1 |        461,820 |           132.0 |              48.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeMedia_seq0_86b46a08c31edfaa                 | archlinux            | socialnetwork-media-service-1(2485)           |       0.202 |    0.135 |      2 |        576,751 |             0.0 |               0.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeMedia_seq0_89e6cb26bb9d4577                 | archlinux            | socialnetwork-media-service-1(2485)           |       0.073 |    0.073 |      1 |        303,051 |             0.0 |              32.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeMedia_seq0_9e406a703cf43abb                 | archlinux            | socialnetwork-media-service-1(2485)           |       0.068 |    0.068 |      1 |        286,496 |             0.0 |              32.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeMedia_seq0_a08312f072d2df7e                 | archlinux            | socialnetwork-media-service-1(2485)           |       0.110 |    0.093 |      2 |        389,353 |             0.0 |              32.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeMedia_seq0_da1f6dadb586f65a                 | archlinux            | socialnetwork-media-service-1(2485)           |       0.046 |    0.046 |      1 |        190,997 |             0.0 |              32.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeMedia_seq0_e09d802f8c9c4219                 | archlinux            | socialnetwork-media-service-1(2485)           |       0.065 |    0.065 |      1 |        278,128 |             0.0 |              32.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeMedia_seq0_fc4e81a302e39399                 | archlinux            | socialnetwork-media-service-1(2485)           |       0.249 |    0.196 |      3 |        838,560 |             0.0 |               0.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposePost_seq0_2b6d06036edd0632                  | archlinux            | socialnetwork-compose-post-service-1(2750)    |       6.748 |    2.645 |     32 |     11,076,146 |         32784.0 |              88.0 |       1.5 |       0.8 |        2.7 |        0.0
+ComposePost_seq0_3d32dee6d2910716                  | archlinux            | socialnetwork-compose-post-service-1(2750)    |   10015.442 |    2.747 |     41 |     10,962,251 |         32784.0 |              88.0 |       1.4 |       0.7 |        2.7 |        0.0
+ComposePost_seq0_595d69777c674928                  | archlinux            | socialnetwork-compose-post-service-1(2750)    |   10014.345 |    2.523 |     35 |      9,717,256 |         32784.0 |              88.0 |       1.4 |       0.7 |        2.2 |        0.0
+ComposePost_seq0_68d41c752bcb30d9                  | archlinux            | socialnetwork-compose-post-service-1(2750)    |       6.835 |    2.086 |     30 |      8,590,278 |         16392.0 |              72.0 |       1.4 |       0.6 |        1.7 |        0.0
+ComposePost_seq0_7ba2c42ea827743b                  | archlinux            | socialnetwork-compose-post-service-1(2750)    |   10016.954 |    1.526 |     29 |      6,493,518 |         16392.0 |              52.0 |       1.2 |       0.3 |        0.0 |        0.0
+ComposePost_seq0_7bed1358b23e26fe                  | archlinux            | socialnetwork-compose-post-service-1(2750)    |       6.540 |    1.881 |     28 |      7,956,966 |          8196.0 |              48.0 |       1.3 |       0.5 |        1.5 |        0.0
+ComposePost_seq0_8dffd522a5658cd6                  | archlinux            | socialnetwork-compose-post-service-1(2750)    |   10015.295 |    1.816 |     28 |      7,114,324 |         24588.0 |              64.0 |       1.2 |       0.3 |        0.0 |        0.0
+ComposePost_seq0_912a36cc9f8ef523                  | archlinux            | socialnetwork-compose-post-service-1(2750)    |       5.725 |    1.768 |     28 |      7,464,546 |         32784.0 |              68.0 |       1.2 |       0.4 |        0.5 |        0.0
+ComposePost_seq0_d5e50d55c09c2cf0                  | archlinux            | socialnetwork-compose-post-service-1(2750)    |       7.001 |    2.202 |     38 |      9,261,096 |         32784.0 |              80.0 |       1.3 |       0.5 |        1.5 |        0.0
+ComposePost_seq0_fe308773c749c85e                  | archlinux            | socialnetwork-compose-post-service-1(2750)    |   10014.953 |    2.569 |     43 |     10,253,129 |         24588.0 |              68.0 |       1.4 |       0.7 |        2.7 |        0.0
+ComposeText_seq0_7041f47216413c1d                  | archlinux            | socialnetwork-text-service-1(2583)            |       1.331 |    0.872 |     10 |      3,742,247 |          8196.0 |              76.0 |       0.4 |       0.1 |        0.5 |        0.0
+ComposeText_seq0_726cece833c06b4e                  | archlinux            | socialnetwork-text-service-1(2583)            |       0.378 |    0.373 |      6 |      1,554,075 |             0.0 |              32.0 |       0.3 |       0.1 |        0.0 |        0.0
+ComposeText_seq0_736f1c5ae695ca5a                  | archlinux            | socialnetwork-text-service-1(2583)            |       1.668 |    0.645 |     11 |      2,766,808 |         16392.0 |              32.0 |       0.3 |       0.1 |        0.0 |        0.0
+ComposeText_seq0_b3cabffc5effcc5c                  | archlinux            | socialnetwork-text-service-1(2583)            |       1.100 |    0.649 |     12 |      2,782,120 |             0.0 |              32.0 |       0.3 |       0.1 |        0.0 |        0.0
+ComposeText_seq0_b57c7888ad506cc3                  | archlinux            | socialnetwork-text-service-1(2583)            |       0.702 |    0.395 |      9 |      1,685,831 |             0.0 |              32.0 |       0.3 |       0.2 |        0.0 |        0.0
+ComposeText_seq0_bd519fceb965b9b3                  | archlinux            | socialnetwork-text-service-1(2583)            |       1.056 |    0.633 |      9 |      2,715,257 |             0.0 |              32.0 |       0.3 |       0.1 |        0.0 |        0.0
+ComposeText_seq0_d332d7d20948829a                  | archlinux            | socialnetwork-text-service-1(2583)            |       1.076 |    0.839 |     12 |      3,596,529 |             0.0 |              32.0 |       0.4 |       0.4 |        1.0 |        0.0
+ComposeText_seq0_e3a5c19fe26b07d4                  | archlinux            | socialnetwork-text-service-1(2583)            |       0.364 |    0.396 |      6 |      1,652,563 |             0.0 |              32.0 |       0.3 |       0.1 |        0.0 |        0.0
+ComposeText_seq0_f3f15a4e53f77ce9                  | archlinux            | socialnetwork-text-service-1(2583)            |       0.900 |    0.651 |      8 |      2,790,562 |             0.0 |              32.0 |       0.4 |       0.2 |        0.5 |        0.0
+ComposeText_seq0_f5ae40412a05aa65                  | archlinux            | socialnetwork-text-service-1(2583)            |       0.962 |    0.660 |      8 |      2,814,838 |             0.0 |              36.0 |       0.4 |       0.2 |        0.5 |        0.0
+ComposeUniqueId_seq0_11a12983d4bc7302              | archlinux            | socialnetwork-unique-id-service-1(2276)       |       0.074 |    0.074 |      1 |        309,032 |             0.0 |              32.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUniqueId_seq0_2427418b1e4bc23b              | archlinux            | socialnetwork-unique-id-service-1(2276)       |       0.077 |    0.077 |      1 |        319,713 |             0.0 |              32.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUniqueId_seq0_2a5b5302ee755240              | archlinux            | socialnetwork-unique-id-service-1(2276)       |       0.136 |    0.115 |      2 |        490,238 |             0.0 |               0.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUniqueId_seq0_4363baac9d3707e7              | archlinux            | socialnetwork-unique-id-service-1(2276)       |       0.083 |    0.083 |      1 |        344,967 |             0.0 |              32.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUniqueId_seq0_8210294771fd786b              | archlinux            | socialnetwork-unique-id-service-1(2276)       |       0.073 |    0.073 |      1 |        302,093 |             0.0 |              32.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUniqueId_seq0_89712abcd42bab3f              | archlinux            | socialnetwork-unique-id-service-1(2276)       |       0.069 |    0.069 |      1 |        289,699 |             0.0 |              32.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUniqueId_seq0_932e8ebe09e09ee6              | archlinux            | socialnetwork-unique-id-service-1(2276)       |       0.202 |    0.152 |      4 |        649,211 |             0.0 |               0.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUniqueId_seq0_a52bbcc2f91d740e              | archlinux            | socialnetwork-unique-id-service-1(2276)       |       0.079 |    0.079 |      1 |        319,993 |             0.0 |              32.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUniqueId_seq0_b00090cd90dd5c7d              | archlinux            | socialnetwork-unique-id-service-1(2276)       |       0.476 |    0.138 |      3 |        592,109 |             0.0 |               0.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUniqueId_seq0_e91598da7b61d7e5              | archlinux            | socialnetwork-unique-id-service-1(2276)       |       0.378 |    0.201 |      3 |        862,604 |             0.0 |               0.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUrls_seq0_059b8d59c03f1f41                  | archlinux            | socialnetwork-url-shorten-service-1(2176)     |       0.053 |    0.053 |      1 |        227,639 |             0.0 |              32.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_113130e30ee42de1                  | archlinux            | socialnetwork-url-shorten-service-1(2176)     |       0.062 |    0.062 |      1 |        267,161 |             0.0 |              32.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_142c4a9c1907d741                  | archlinux            | socialnetwork-url-shorten-service-1(2176)     |       0.229 |    0.143 |      3 |        608,832 |             0.0 |               0.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUrls_seq0_2d027c8b1796a0f7                  | archlinux            | socialnetwork-url-shorten-service-1(2176)     |       0.064 |    0.064 |      1 |        272,888 |             0.0 |              32.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_2d654089098bd1f8                  | archlinux            | socialnetwork-url-shorten-service-1(2176)     |       0.065 |    0.065 |      1 |        271,579 |             0.0 |              32.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUrls_seq0_4137471582eabf04                  | archlinux            | socialnetwork-url-shorten-service-1(2176)     |       0.401 |    0.163 |      4 |        699,245 |             0.0 |               0.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUrls_seq0_849c3e204de8c229                  | archlinux            | socialnetwork-url-shorten-service-1(2176)     |       0.066 |    0.066 |      1 |        283,779 |             0.0 |              32.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_8e0d9c23f9694943                  | archlinux            | socialnetwork-url-shorten-service-1(2176)     |       0.071 |    0.071 |      1 |        301,586 |             0.0 |              32.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_a2807cb202961a84                  | archlinux            | socialnetwork-url-shorten-service-1(2176)     |       0.066 |    0.066 |      1 |        274,057 |             0.0 |              32.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUrls_seq0_c6f8cd63a98c879e                  | archlinux            | socialnetwork-url-shorten-service-1(2176)     |       0.172 |    0.105 |      2 |        448,097 |             0.0 |               0.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUserMentions_seq0_06aed9f81cac4760          | archlinux            | socialnetwork-user-mention-service-1(2437)    |       0.142 |    0.111 |      2 |        475,944 |             0.0 |               0.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUserMentions_seq0_09064d5057f1cff4          | archlinux            | socialnetwork-user-mention-service-1(2437)    |       0.171 |    0.104 |      2 |        443,102 |             0.0 |               0.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUserMentions_seq0_16a404e09c70a48c          | archlinux            | socialnetwork-user-mention-service-1(2437)    |       0.158 |    0.097 |      2 |        416,990 |             0.0 |               0.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUserMentions_seq0_4024429c7886064b          | archlinux            | socialnetwork-user-mention-service-1(2437)    |       0.071 |    0.071 |      1 |        300,854 |             0.0 |              32.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUserMentions_seq0_4642722fa46631ab          | archlinux            | socialnetwork-user-mention-service-1(2437)    |       0.284 |    0.213 |      3 |        912,764 |             0.0 |               0.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUserMentions_seq0_5b446ed2236df20a          | archlinux            | socialnetwork-user-mention-service-1(2437)    |       0.071 |    0.071 |      1 |        299,838 |             0.0 |              32.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUserMentions_seq0_6d235c1e129d418d          | archlinux            | socialnetwork-user-mention-service-1(2437)    |       0.060 |    0.060 |      1 |        248,772 |             0.0 |              32.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUserMentions_seq0_75d0f8b08f13c151          | archlinux            | socialnetwork-user-mention-service-1(2437)    |       0.103 |    0.069 |      2 |        287,514 |             0.0 |              32.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUserMentions_seq0_8af91cb0c323f72e          | archlinux            | socialnetwork-user-mention-service-1(2437)    |       0.074 |    0.074 |      1 |        315,611 |             0.0 |              32.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUserMentions_seq0_a5a35b1d3e36d3e9          | archlinux            | socialnetwork-user-mention-service-1(2437)    |       0.056 |    0.056 |      1 |        240,967 |             0.0 |              32.0 |       0.0 |       0.1 |        0.0 |        0.0
+GetFollowers_seq0_254bdeb3bfb4158f                 | archlinux            | socialnetwork-social-graph-service-1(2537)    |       1.223 |    0.614 |      6 |      2,500,925 |             0.0 |               0.0 |       0.3 |       0.2 |        0.5 |        0.0
+GetFollowers_seq0_31cfe1629ca8650a                 | archlinux            | socialnetwork-social-graph-service-1(2537)    |       1.444 |    0.504 |      6 |      2,062,372 |             0.0 |              36.0 |       0.3 |       0.3 |        0.5 |        0.0
+GetFollowers_seq0_416374092dbfbb04                 | archlinux            | socialnetwork-social-graph-service-1(2537)    |       0.882 |    0.471 |      4 |      1,926,031 |             0.0 |              36.0 |       0.3 |       0.3 |        0.5 |        0.0
+GetFollowers_seq0_44b8ea7866e4d8f5                 | archlinux            | socialnetwork-social-graph-service-1(2537)    |       0.753 |    0.311 |      5 |      1,274,054 |             0.0 |              36.0 |       0.2 |       0.2 |        0.0 |        0.0
+GetFollowers_seq0_65b3985f02e64435                 | archlinux            | socialnetwork-social-graph-service-1(2537)    |       1.059 |    0.558 |      7 |      2,281,706 |             0.0 |               4.0 |       0.3 |       0.3 |        0.5 |        0.0
+GetFollowers_seq0_6ad3282572e080ed                 | archlinux            | socialnetwork-social-graph-service-1(2537)    |       0.463 |    0.260 |      4 |      1,056,005 |             0.0 |              36.0 |       0.2 |       0.1 |        0.0 |        0.0
+GetFollowers_seq0_851b967aecdc195f                 | archlinux            | socialnetwork-social-graph-service-1(2537)    |       0.871 |    0.319 |      5 |      1,305,964 |             0.0 |              32.0 |       0.2 |       0.2 |        0.0 |        0.0
+GetFollowers_seq0_b0ed2f97d54feade                 | archlinux            | socialnetwork-social-graph-service-1(2537)    |       0.670 |    0.306 |      7 |      1,214,661 |             0.0 |              36.0 |       0.2 |       0.2 |        0.0 |        0.0
+GetFollowers_seq0_ea0fe1935a081ed7                 | archlinux            | socialnetwork-social-graph-service-1(2537)    |       0.459 |    0.231 |      3 |        941,333 |             0.0 |              32.0 |       0.2 |       0.1 |        0.0 |        0.0
+GetFollowers_seq0_ff8240b60872fbf7                 | archlinux            | socialnetwork-social-graph-service-1(2537)    |       0.419 |    0.195 |      3 |        799,236 |             0.0 |              32.0 |       0.2 |       0.1 |        0.0 |        0.0
+StorePost_seq0_26d5edade07fefce                    | archlinux            | socialnetwork-post-storage-service-1(2055)    |       0.282 |    0.160 |      2 |        647,094 |             0.0 |              32.0 |       0.4 |       0.0 |        0.0 |        0.0
+StorePost_seq0_4dd0766b3b955e08                    | archlinux            | socialnetwork-post-storage-service-1(2055)    |       0.320 |    0.161 |      2 |        650,851 |             0.0 |              32.0 |       0.4 |       0.0 |        0.0 |        0.0
+StorePost_seq0_56f419f9e5bb0772                    | archlinux            | socialnetwork-post-storage-service-1(2055)    |       0.641 |    0.224 |      3 |        947,126 |             0.0 |               0.0 |       0.4 |       0.0 |        0.0 |        0.0
+StorePost_seq0_58717e752bac4f14                    | archlinux            | socialnetwork-post-storage-service-1(2055)    |       0.870 |    0.267 |      3 |      1,137,096 |             0.0 |               0.0 |       0.4 |       0.0 |        0.0 |        0.0
+StorePost_seq0_6992c8ab2afef03c                    | archlinux            | socialnetwork-post-storage-service-1(2055)    |       0.335 |    0.192 |      3 |        774,664 |             0.0 |               0.0 |       0.4 |       0.0 |        0.0 |        0.0
+StorePost_seq0_6e3708257aeb35f8                    | archlinux            | socialnetwork-post-storage-service-1(2055)    |       0.305 |    0.160 |      2 |        645,184 |             0.0 |              32.0 |       0.4 |       0.0 |        0.0 |        0.0
+StorePost_seq0_93dea5232a79fe26                    | archlinux            | socialnetwork-post-storage-service-1(2055)    |       0.250 |    0.156 |      2 |        629,917 |             0.0 |              32.0 |       0.4 |       0.0 |        0.0 |        0.0
+StorePost_seq0_a81da0d009ab5959                    | archlinux            | socialnetwork-post-storage-service-1(2055)    |       0.332 |    0.181 |      2 |        731,853 |             0.0 |              32.0 |       0.4 |       0.0 |        0.0 |        0.0
+StorePost_seq0_b57bca38d6c99fda                    | archlinux            | socialnetwork-post-storage-service-1(2055)    |       1.204 |    0.203 |      4 |        837,680 |             0.0 |               0.0 |       0.4 |       0.0 |        0.0 |        0.0
+StorePost_seq0_e8ef74a34535a189                    | archlinux            | socialnetwork-post-storage-service-1(2055)    |       0.315 |    0.189 |      3 |        786,824 |             0.0 |               0.0 |       0.4 |       0.0 |        0.0 |        0.0
+WriteHomeTimeline_seq0_025773664d2b1f54            | archlinux            | socialnetwork-home-timeline-service-1(2115)   |       1.698 |    0.511 |      7 |      2,093,969 |             0.0 |              32.0 |       0.2 |       0.1 |        0.5 |        0.0
+WriteHomeTimeline_seq0_03bf7aa14ea1926f            | archlinux            | socialnetwork-home-timeline-service-1(2115)   |       1.174 |    0.452 |      5 |      1,809,519 |             0.0 |              32.0 |       0.2 |       0.1 |        0.5 |        0.0
+WriteHomeTimeline_seq0_3fb439bd1070e1d8            | archlinux            | socialnetwork-home-timeline-service-1(2115)   |       1.820 |    0.350 |      3 |      1,421,541 |             0.0 |              32.0 |       0.2 |       0.1 |        0.5 |        0.0
+WriteHomeTimeline_seq0_4993e5ccc14fbb7b            | archlinux            | socialnetwork-home-timeline-service-1(2115)   |       2.303 |    0.585 |      7 |      2,394,909 |             0.0 |               0.0 |       0.2 |       0.1 |        0.5 |        0.0
+WriteHomeTimeline_seq0_49eca90f69a774bf            | archlinux            | socialnetwork-home-timeline-service-1(2115)   |       2.598 |    0.647 |     11 |      2,645,568 |             0.0 |               4.0 |       0.3 |       0.2 |        0.4 |        0.0
+WriteHomeTimeline_seq0_4ee3158fb4605357            | archlinux            | socialnetwork-home-timeline-service-1(2115)   |       1.157 |    0.501 |      4 |      2,028,534 |             0.0 |              36.0 |       0.3 |       0.2 |        0.7 |        0.0
+WriteHomeTimeline_seq0_830a45f438339f93            | archlinux            | socialnetwork-home-timeline-service-1(2115)   |       1.810 |    0.497 |      7 |      2,026,503 |             0.0 |               4.0 |       0.2 |       0.1 |        0.2 |        0.0
+WriteHomeTimeline_seq0_aca672ad517a6ca1            | archlinux            | socialnetwork-home-timeline-service-1(2115)   |       0.847 |    0.299 |      5 |      1,222,566 |             0.0 |              32.0 |       0.2 |       0.1 |        0.0 |        0.0
+WriteHomeTimeline_seq0_d502663be8e20fc7            | archlinux            | socialnetwork-home-timeline-service-1(2115)   |       1.339 |    0.300 |      3 |      1,223,122 |             0.0 |               0.0 |       0.2 |       0.1 |        0.0 |        0.0
+WriteHomeTimeline_seq0_f560e5e60479b429            | archlinux            | socialnetwork-home-timeline-service-1(2115)   |       0.932 |    0.319 |      3 |      1,300,237 |             0.0 |              32.0 |       0.2 |       0.1 |        0.5 |        0.0
+WriteUserTimeline_seq0_038805a5911f8247            | archlinux            | socialnetwork-user-timeline-service-1(2631)   |       0.823 |    0.459 |      5 |      1,862,379 |             0.0 |               4.0 |       0.4 |       0.3 |        0.5 |        0.0
+WriteUserTimeline_seq0_0508bec20e2d7c74            | archlinux            | socialnetwork-user-timeline-service-1(2631)   |       0.464 |    0.198 |      3 |        809,111 |             0.0 |              40.0 |       0.4 |       0.2 |        0.0 |        0.0
+WriteUserTimeline_seq0_14229dad613f9d00            | archlinux            | socialnetwork-user-timeline-service-1(2631)   |       0.444 |    0.203 |      3 |        831,195 |             0.0 |              40.0 |       0.4 |       0.2 |        0.0 |        0.0
+WriteUserTimeline_seq0_2ea9ce9cac908f2f            | archlinux            | socialnetwork-user-timeline-service-1(2631)   |       1.237 |    0.488 |      6 |      1,985,599 |             0.0 |               4.0 |       0.4 |       0.3 |        0.5 |        0.0
+WriteUserTimeline_seq0_3847173828bf47d3            | archlinux            | socialnetwork-user-timeline-service-1(2631)   |       1.155 |    0.481 |      5 |      1,956,448 |             0.0 |               0.0 |       0.4 |       0.3 |        0.2 |        0.0
+WriteUserTimeline_seq0_45cbfa401f532049            | archlinux            | socialnetwork-user-timeline-service-1(2631)   |       0.630 |    0.203 |      3 |        828,571 |             0.0 |              40.0 |       0.4 |       0.2 |        0.0 |        0.0
+WriteUserTimeline_seq0_97b2b2d729b97a25            | archlinux            | socialnetwork-user-timeline-service-1(2631)   |       1.285 |    0.565 |      5 |      2,308,149 |             0.0 |               0.0 |       0.4 |       0.3 |        0.2 |        0.0
+WriteUserTimeline_seq0_afbe7f9676d769e9            | archlinux            | socialnetwork-user-timeline-service-1(2631)   |       1.008 |    0.389 |      4 |      1,590,172 |             0.0 |              44.0 |       0.4 |       0.3 |        0.5 |        0.0
+WriteUserTimeline_seq0_ce55968e24cbf21d            | archlinux            | socialnetwork-user-timeline-service-1(2631)   |       0.704 |    0.215 |      4 |        881,274 |             0.0 |              40.0 |       0.4 |       0.2 |        0.0 |        0.0
+WriteUserTimeline_seq0_e1878ca583c8eb3c            | archlinux            | socialnetwork-user-timeline-service-1(2631)   |       1.011 |    0.440 |      5 |      1,789,972 |             0.0 |               4.0 |       0.4 |       0.3 |        0.5 |        0.0
+
+ACCUMULATED RESOURCE SUMMARY (ROOT TRACES)
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Request-ID                                         | Machine              | Service                                       | Latency(ms) |  CPU(ms) | Bursts |         Cycles | Virtual Mem(KB) | Peak Physical(KB) |  Send(KB) |  Recv(KB) | DiskRd(KB) | DiskWr(KB)
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ComposePost_seq0_2b6d06036edd0632                  | archlinux            | socialnetwork-compose-post-service-1(2750)    |       6.748 |    4.827 |     64 |     20,214,072 |         32784.0 |             420.0 |       3.3 |       2.0 |        3.7 |        0.0
+ComposePost_seq0_3d32dee6d2910716                  | archlinux            | socialnetwork-compose-post-service-1(2750)    |   10015.442 |    4.969 |     70 |     20,252,663 |         40980.0 |             432.0 |       3.2 |       1.5 |        3.7 |        0.0
+ComposePost_seq0_595d69777c674928                  | archlinux            | socialnetwork-compose-post-service-1(2750)    |   10014.345 |    4.180 |     58 |     16,541,380 |         32784.0 |             416.0 |       3.1 |       1.3 |        2.7 |        0.0
+ComposePost_seq0_68d41c752bcb30d9                  | archlinux            | socialnetwork-compose-post-service-1(2750)    |       6.835 |    3.957 |     59 |     16,210,336 |         16524.0 |             420.0 |       3.2 |       1.3 |        2.2 |        0.0
+ComposePost_seq0_7ba2c42ea827743b                  | archlinux            | socialnetwork-compose-post-service-1(2750)    |   10016.954 |    5.085 |     82 |     21,344,910 |         16392.0 |             164.0 |       3.3 |       1.4 |        1.4 |        0.0
+ComposePost_seq0_7bed1358b23e26fe                  | archlinux            | socialnetwork-compose-post-service-1(2750)    |       6.540 |    4.441 |     66 |     18,563,548 |          8196.0 |             244.0 |       3.2 |       1.9 |        2.7 |        0.0
+ComposePost_seq0_8dffd522a5658cd6                  | archlinux            | socialnetwork-compose-post-service-1(2750)    |   10015.295 |    5.290 |     77 |     21,648,759 |         24588.0 |             100.0 |       3.0 |       1.0 |        0.9 |        0.0
+ComposePost_seq0_912a36cc9f8ef523                  | archlinux            | socialnetwork-compose-post-service-1(2750)    |       5.725 |    4.388 |     62 |     18,390,089 |         32784.0 |             172.0 |       3.1 |       1.5 |        2.0 |        0.0
+ComposePost_seq0_d5e50d55c09c2cf0                  | archlinux            | socialnetwork-compose-post-service-1(2750)    |       7.001 |    4.823 |     77 |     20,173,057 |         49176.0 |             244.0 |       3.2 |       1.4 |        2.5 |        0.0
+ComposePost_seq0_fe308773c749c85e                  | archlinux            | socialnetwork-compose-post-service-1(2750)    |   10014.953 |    4.832 |     69 |     19,632,160 |         24588.0 |             408.0 |       3.3 |       1.8 |        4.4 |        0.0

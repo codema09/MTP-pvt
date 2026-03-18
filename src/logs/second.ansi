@@ -1,0 +1,7 @@
+============================================================
+    🔍 INTEGRATED FULL SNIFFER (FIXED + IO + CPU BURSTS)     
+============================================================
+Target PIDs: [2649, 2460, 2575, 2416, 2030, 2739, 1632, 1508, 2248, 2694, 1546, 1975]
+Log File:    /home/khr/homefr/MTP/ebpf/bcc-latest/src/memory_debug.log
+Initializing BPF... (Please wait)
+✓ BPF Loaded. Monitoring...

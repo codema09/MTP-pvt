@@ -20,7 +20,29 @@ import re
 import os
 import sys
 import argparse
+import signal
 from datetime import datetime
+
+# ═══════════════════════════════════════════════════════════════
+# ANSI COLORS
+# ═══════════════════════════════════════════════════════════════
+class C:
+    RESET   = "\033[0m"
+    BOLD    = "\033[1m"
+    # Request entry  — cyan
+    ENTRY   = "\033[96m"
+    # New connection — yellow
+    CONN    = "\033[93m"
+    # Thread exit    — green
+    EXIT    = "\033[92m"
+    # Final summary  — default (no color change)
+
+# Hardcoded indentation strings for each log level
+IND_ENTRY  = "    "              # 4 spaces  — request entry lines
+IND_CONN   = "  "               # 2 spaces  — new connection lines
+IND_EXIT   = "        "         # 8 spaces  — thread exit header
+IND_TABLE  = "            "     # 12 spaces — table rows and header
+IND_CPU    = "                " # 16 spaces — CPU detail lines
 
 # ═══════════════════════════════════════════════════════════════
 # CONFIGURATION
@@ -74,11 +96,35 @@ class IntegratedSnifferFull:
         self.request_counter = 0
         self.recorded_requests = []
         self.pending_conn_events = {}  # tid -> [(src_ip, src_port, dst_ip, dst_port)]
+        self.exited_requests = set()   # request_ids that already got a THREAD EXIT block
+        self.tid_burst_debug = {}      # tid -> {'count': N, 'total_ms': X, 'cycles': Y, 'insns': Z}
+        self.recorded_connections = []  # list of dicts, one per NEW CONNECTION event
+        self._graph_dirty = False
+        
+        self.service_mapping = {}
+        self._load_service_mapping()
+        self.log_handler_url = None     # set via --log-handler CLI arg or LOG_HANDLER_URL env
+        # Offset to convert bpf_ktime_get_ns() (monotonic) to wall-clock epoch ns
+        self._ktime_offset_ns = time.time_ns() - time.monotonic_ns()
 
         # Prepare Log File
         self.log_file = open(LOG_FILENAME, "w")
         self.log_file.write(f"TIMESTAMP             | TID   | EVENT | SIZE (KB) | CURRENT TID RSS (KB) | PFN\n")
         self.log_file.write("-" * 90 + "\n")
+
+    def _load_service_mapping(self):
+        try:
+            import os
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            mapping_file = os.path.join(base_dir, "service_mapping.txt")
+            if os.path.exists(mapping_file):
+                with open(mapping_file, "r") as f:
+                    for line in f:
+                        if ":" in line:
+                            svc, pid = line.strip().split(":")
+                            self.service_mapping[int(pid.strip())] = svc.strip()
+        except Exception as e:
+            print(f"[Warning] Could not load service_mapping.txt: {e}")
 
     def ip_to_str(self, ip):
         try:
@@ -229,20 +275,20 @@ class IntegratedSnifferFull:
                         cpu_burst_total_ns=temp_usage.cpu_burst_total_ns,
                         cpu_burst_count=temp_usage.cpu_burst_count,
                         cpu_cycles_total=temp_usage.cpu_cycles_total,
-                        cpu_instructions_total=temp_usage.cpu_instructions_total
+                        cpu_instructions_total=temp_usage.cpu_instructions_total,
+                        first_cpu_burst_ns=temp_usage.first_cpu_burst_ns,
+                        last_cpu_burst_ns=temp_usage.last_cpu_burst_ns,
+                        first_recv_ns=temp_usage.first_recv_ns,
+                        last_send_ns=temp_usage.last_send_ns
                     )
                     req_key = resource_map.Key(id=request_id.encode('utf-8')[:63])
                     resource_map[req_key] = usage
-                    
                     req_id_key_val = tid_to_req_map.Leaf(id=request_id.encode('utf-8')[:63])
                     tid_to_req_map[ctypes.c_uint(tid)] = req_id_key_val
                     del resource_map[temp_key]
                     return
                 except KeyError: pass
 
-            req_id_key_val = tid_to_req_map.Leaf(id=request_id.encode('utf-8')[:63])
-            tid_to_req_map[ctypes.c_uint(tid)] = req_id_key_val
-            
             usage = resource_map.Leaf(
                 request_id=request_id.encode('utf-8')[:63],
                 tid=tid,
@@ -266,10 +312,19 @@ class IntegratedSnifferFull:
                 cpu_burst_total_ns=0,
                 cpu_burst_count=0,
                 cpu_cycles_total=0,
-                cpu_instructions_total=0
+                cpu_instructions_total=0,
+                first_cpu_burst_ns=0,
+                last_cpu_burst_ns=0,
+                first_recv_ns=0,
+                last_send_ns=0
             )
+            # Write resource_map BEFORE tid_to_request_id to avoid a race where
+            # the kernel finds the request_id key but the resource entry doesn't
+            # exist yet, causing the burst to be silently dropped.
             req_key = resource_map.Key(id=request_id.encode('utf-8')[:63])
             resource_map[req_key] = usage
+            req_id_key_val = tid_to_req_map.Leaf(id=request_id.encode('utf-8')[:63])
+            tid_to_req_map[ctypes.c_uint(tid)] = req_id_key_val
         except Exception as e: print(f"Error tracking: {e}")
 
     def complete_resource_tracking(self, request_id, thread_exit=False):
@@ -280,8 +335,37 @@ class IntegratedSnifferFull:
 
             completion_time_ns = int(time.time_ns())
             usage.end_time_ns = completion_time_ns
-            usage.duration_ns = usage.end_time_ns - usage.start_time_ns
-            
+
+            # Drain any remaining pre_assign CPU data that the kernel didn't
+            # get to flush (thread went idle before tid_to_request_id was set,
+            # so PART 1 never saw the request_id at schedule-out time).
+            try:
+                pre_map = self.bpf.get_table("tid_cpu_pre_assign")
+                pre = pre_map[ctypes.c_uint(usage.tid)]
+                usage.cpu_burst_total_ns     += pre.total_ns
+                usage.cpu_burst_count        += pre.burst_count
+                usage.cpu_cycles_total       += pre.cycles
+                usage.cpu_instructions_total += pre.instructions
+                # Guard: reject pre-assign burst timestamps that predate the request.
+                # (Thread-pool threads accumulate bursts while idle before a request arrives.)
+                if pre.first_cpu_burst_ns > 0 and pre.first_cpu_burst_ns >= usage.start_time_ns:
+                    if usage.first_cpu_burst_ns == 0 or pre.first_cpu_burst_ns < usage.first_cpu_burst_ns:
+                        usage.first_cpu_burst_ns = pre.first_cpu_burst_ns
+                if pre.last_cpu_burst_ns > usage.last_cpu_burst_ns:
+                    usage.last_cpu_burst_ns = pre.last_cpu_burst_ns
+                del pre_map[ctypes.c_uint(usage.tid)]
+            except KeyError:
+                pass
+
+            if usage.first_cpu_burst_ns > 0 and usage.last_cpu_burst_ns > 0 and usage.last_cpu_burst_ns >= usage.first_cpu_burst_ns:
+                usage.duration_ns = usage.last_cpu_burst_ns - usage.first_cpu_burst_ns
+            elif usage.first_recv_ns > 0 and usage.last_send_ns > 0 and usage.last_send_ns >= usage.first_recv_ns:
+                usage.duration_ns = usage.last_send_ns - usage.first_recv_ns
+            elif usage.last_send_ns > 0 and usage.start_time_ns < 1e16 and usage.last_send_ns >= usage.start_time_ns:
+                usage.duration_ns = usage.last_send_ns - usage.start_time_ns
+            else:
+                usage.duration_ns = usage.end_time_ns - usage.start_time_ns
+
             # --- New CPU Stats Calculation ---
             total_cpu_ms = usage.cpu_burst_total_ns / 1_000_000.0
             avg_burst_ms = 0
@@ -299,10 +383,15 @@ class IntegratedSnifferFull:
                 avg_instructions = total_instructions / usage.cpu_burst_count
             # ---------------------------------
 
-            try:
-                overhead_map = self.bpf.get_table("tid_to_overhead_ns")
-                usage.system_overhead_ns = overhead_map[ctypes.c_uint(usage.tid)].value
-            except KeyError: pass
+            # For normally-exited threads the eBPF sched_process_exit handler
+            # transfers the overhead.  For threads still alive (flushed at
+            # USC exit), the map entry is still present — read it as fallback.
+            if usage.system_overhead_ns == 0:
+                try:
+                    overhead_map = self.bpf.get_table("tid_to_overhead_ns")
+                    usage.system_overhead_ns = overhead_map[ctypes.c_uint(usage.tid)].value
+                except KeyError:
+                    pass
 
             if usage.thread_lifetime_ns == 0:
                  try:
@@ -328,19 +417,35 @@ class IntegratedSnifferFull:
             # Save to python list
             record = {
                 'id': request_id,
-                'ts': datetime.fromtimestamp(usage.start_time_ns / 1e9).strftime('%Y-%m-%d %H:%M:%S'),
+                'ts': datetime.fromtimestamp(
+                    (usage.start_time_ns + self._ktime_offset_ns) / 1e9
+                    if usage.start_time_ns < 1e16
+                    else usage.start_time_ns / 1e9
+                ).strftime('%Y-%m-%d %H:%M:%S'),
                 'tid': usage.tid,
+                'pid': usage.pid,
+                'service_name': self.service_mapping.get(usage.pid, 'Unknown'),
                 'src': f"{self.ip_to_str(usage.src_ip)}:{usage.src_port}",
                 'dst': f"{self.ip_to_str(usage.dst_ip)}:{usage.dst_port}",
-                'mmap': usage.mmap_bytes / 1024.0,
-                'mprot': usage.mprotect_bytes / 1024.0,
+                'vmem': (usage.mmap_bytes + usage.mprotect_bytes) / 1024.0,
                 'peak': usage.peak_physical_bytes / 1024.0,
                 'overhead': usage.system_overhead_ns,
                 'latency': usage.duration_ns / 1_000_000.0,
                 'send': usage.bytes_sent / 1024.0,
                 'recv': usage.bytes_recv / 1024.0,
                 'disk_rd': usage.disk_read_bytes / 1024.0,
-                'disk_wr': usage.disk_write_bytes / 1024.0
+                'disk_wr': usage.disk_write_bytes / 1024.0,
+                # CPU stats for log-handler
+                'cpu_burst_count': usage.cpu_burst_count,
+                'cpu_burst_total_ms': total_cpu_ms,
+                'cpu_cycles_total': total_cycles,
+                'cpu_instructions_total': total_instructions,
+                # Raw 4-tuple for log-handler matching
+                'src_ip': self.ip_to_str(usage.src_ip),
+                'src_port': usage.src_port,
+                'dst_ip': self.ip_to_str(usage.dst_ip),
+                'dst_port': usage.dst_port,
+                'payload_req_id': usage.payload_req_id,
             }
             
             # Only add to list if not present (or update it)
@@ -354,24 +459,34 @@ class IntegratedSnifferFull:
                 self.recorded_requests.append(record)
 
             if thread_exit:
-                print(f"\n[Thread Exit] Stats for Request: {request_id}")
+                if request_id in self.exited_requests:
+                    return
+                self.exited_requests.add(request_id)
+                print()
+                print(f"{C.EXIT}{C.BOLD}{IND_EXIT}✔ [THREAD EXIT] {request_id}{C.RESET}")
                 self.print_table_header()
                 self.print_table_row(record)
-                # Print separate block for CPU stats to preserve table structure
-                print(f"   ↳ [CPU DETAILED] Bursts: {usage.cpu_burst_count} | Avg Duration: {avg_burst_ms:.3f} ms | Total CPU: {total_cpu_ms:.3f} ms")
-                print(f"                    Avg Cycles: {avg_cycles:,.0f} | Total Cycles: {total_cycles:,.0f}")
-                print(f"                    Avg Instructions: {avg_instructions:,.0f} | Total Instructions: {total_instructions:,.0f}")
+                print(f"{IND_CPU}↳ [CPU DETAILED] Bursts: {usage.cpu_burst_count} | Avg Duration: {avg_burst_ms:.3f} ms | Total CPU: {total_cpu_ms:.3f} ms")
+                print(f"{IND_CPU}               Avg Cycles: {avg_cycles:,.0f} | Total Cycles: {total_cycles:,.0f}")
+                print(f"{IND_CPU}               Avg Instructions: {avg_instructions:,.0f} | Total Instructions: {total_instructions:,.0f}")
+                dbg = self.tid_burst_debug.get(usage.tid)
+                # if dbg:
+                #     print(f"{IND_CPU}↳ [BURST TRACE] Kernel saw {dbg['count']} bursts for tid={usage.tid} | "
+                #           f"Total: {dbg['total_ms']:.3f} ms | Cycles: {dbg['cycles']:,}")
+                # else:
+                #     print(f"{IND_CPU}↳ [BURST TRACE] No kernel burst events received for tid={usage.tid}")
             
         except KeyError: pass
         except Exception as e: print(f"Error completing: {e}")
 
     def print_table_header(self):
-        print("-" * 238)
-        print(f"{'Request-ID':<20} | {'Date & Time':<19} | {'Thread':<7} | {'Source IP:Port':<21} | {'Dest IP:Port':<21} | {'MMap(KB)':>10} | {'Mprot(KB)':>10} | {'Peak Phy(KB)':>13} | {'Send(KB)':>10} | {'Recv(KB)':>10} | {'DiskRd(KB)':>11} | {'DiskWr(KB)':>11} | {'Overhead(ns)':>13} | {'Latency(ms)':>11}")
-        print("-" * 238)
+        print(f"{IND_TABLE}" + "-" * 318)
+        print(f"{IND_TABLE}{'Request-ID':<48} | {'Date & Time':<19} | {'Service':<45} | {'Thread':<7} | {'Source IP:Port':<21} | {'Dest IP:Port':<21} | {'Virtual Mem(KB)':>15} | {'Peak Phy(KB)':>13} | {'Send(KB)':>10} | {'Recv(KB)':>10} | {'DiskRd(KB)':>11} | {'DiskWr(KB)':>11} | {'Framework Overhead(ns)':>23} | {'Response Latency(ms)':>20}")
+        print(f"{IND_TABLE}" + "-" * 318)
 
     def print_table_row(self, r):
-        print(f"{r['id']:<20} | {r['ts']:<19} | {r['tid']:<7} | {r['src']:<21} | {r.get('dst',''):<21} | {r['mmap']:>10.1f} | {r['mprot']:>10.1f} | {r['peak']:>13.1f} | {r['send']:>10.1f} | {r['recv']:>10.1f} | {r['disk_rd']:>11.1f} | {r['disk_wr']:>11.1f} | {r['overhead']:>13,d} | {r['latency']:>11.2f}")
+        service_display = f"{r.get('service_name', 'Unknown')}({r.get('pid', 0)})"
+        print(f"{IND_TABLE}{r['id']:<48} | {r['ts']:<19} | {service_display:<45} | {r['tid']:<7} | {r['src']:<21} | {r.get('dst',''):<21} | {r['vmem']:>15.1f} | {r['peak']:>13.1f} | {r['send']:>10.1f} | {r['recv']:>10.1f} | {r['disk_rd']:>11.1f} | {r['disk_wr']:>11.1f} | {r['overhead']:>23,d} | {r['latency']:>20.3f}")
 
     def _get_tid_memory_kb(self, tid):
         for pid in self.pids:
@@ -386,7 +501,7 @@ class IntegratedSnifferFull:
 
     def display_user_history(self, username, history):
         print(f"\n--- User History: {username} ---")
-        print(f"| {'#':<3} | {'Request ID':<20} | {'Thread':<7} | {'Overhead(ns)':>13} | {'Peak RSS(MB)':>13} |")
+        print(f"| {'#':<3} | {'Request ID':<20} | {'Thread':<7} | {'Framework Overhead(ns)':>23} | {'Peak RSS(MB)':>13} |")
         print("-" * 75)
         if history.request_count > 0:
             resource_map = self.bpf.get_table("request_resources")
@@ -534,7 +649,46 @@ class IntegratedSnifferFull:
         ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         src = f"{self.ip_to_str(src_ip)}:{src_port}"
         dst = f"{self.ip_to_str(dst_ip)}:{dst_port}"
-        print(f"\n[{ts}] NEW CONNECTION MADE FOR {request_id} WITH THE 4 TUPLE: {src} -> {dst}")
+        print(f"{C.CONN}{IND_CONN}⬡ [{ts}] NEW CONNECTION  {request_id}  {src} → {dst}{C.RESET}")
+        self.recorded_connections.append({
+            'request_id': request_id,
+            'src_ip': self.ip_to_str(src_ip),
+            'src_port': src_port,
+            'dst_ip': self.ip_to_str(dst_ip),
+            'dst_port': dst_port,
+            'timestamp': ts,
+        })
+
+    def handle_thrift_out_event(self, cpu, data, size):
+        ev = self.bpf["thrift_out_events"].event(data)
+        
+        parent_request_id = ev.parent_request_id.decode('utf-8', 'ignore').rstrip('\x00') if ev.has_request_id else ""
+        if not parent_request_id or parent_request_id.startswith('TID_'):
+            return
+            
+        method = ev.method.decode('utf-8', 'ignore').rstrip('\x00')
+        seq_id = ev.seq_id
+
+        ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        src = f"{self.ip_to_str(ev.src_ip)}:{ev.src_port}"
+        dst = f"{self.ip_to_str(ev.dst_ip)}:{ev.dst_port}"
+        
+        req_val = ""
+        if ev.payload_req_id != 0:
+            req_val = f" | req_id_param: {ev.payload_req_id}"
+            
+        print(f"{C.CONN}{IND_CONN}⬡ [{ts}] NEW THRIFT CALL  {parent_request_id}  {src} → {dst} (Outgoing: {method}_seq{seq_id}{req_val}){C.RESET}")
+        
+        self.recorded_connections.append({
+            'request_id': parent_request_id,
+            'src_ip': self.ip_to_str(ev.src_ip),
+            'src_port': ev.src_port,
+            'dst_ip': self.ip_to_str(ev.dst_ip),
+            'dst_port': ev.dst_port,
+            'timestamp': ts,
+            'child_prefix': f"{method}_seq{seq_id}_",
+            'payload_req_id': ev.payload_req_id
+        })
 
     def _flush_pending_conn_events(self, tid, request_id):
         for conn in self.pending_conn_events.pop(tid, []):
@@ -611,14 +765,12 @@ class IntegratedSnifferFull:
         """
         event = self.bpf["thrift_events"].event(data)
         tid   = event.tid
-        raw   = bytes(event.data[:event.data_len])
 
-        method, msg_type, seq_id = self._parse_thrift_header(raw)
-        if method is None:
+        if not event.has_request_id:
             return
-
-        # Track inbound RPC calls only (CALL=1, ONEWAY=4).
-        if msg_type not in (1, 4):
+            
+        request_id = event.request_id.decode('utf-8', 'ignore').rstrip('\x00')
+        if not request_id:
             return
 
         src_ip   = event.src_ip   if event.has_conn_info else 0
@@ -626,19 +778,105 @@ class IntegratedSnifferFull:
         dst_ip   = event.dst_ip   if event.has_conn_info else 0
         dst_port = event.dst_port if event.has_conn_info else 0
 
-        # Build a collision-free request-id: <method>_<16-char hash>
-        # Hash input: src_ip + src_port + current nanosecond timestamp.
-        _hash_src  = f"{src_ip}:{src_port}:{time.time_ns()}".encode()
-        uid        = hashlib.sha256(_hash_src).hexdigest()[:16]
-        request_id = f"{method}_seq{seq_id}_{uid}"
-
-        self.update_resource_tracking(request_id, tid,
-                                      src_ip, src_port, dst_ip, dst_port)
+        # The resource tracking is now completely initialized within eBPF itself 
+        # inside `detect_and_emit_thrift` just before this python event is fired.
         self._flush_pending_conn_events(tid, request_id)
+
+        ts  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        src = f"{self.ip_to_str(src_ip)}:{src_port}"
+        dst = f"{self.ip_to_str(dst_ip)}:{dst_port}"
+        req_val = ""
+        if event.payload_req_id != 0:
+            req_val = f" | req_id_param: {event.payload_req_id}"
+            
+        print(f"{C.ENTRY}{IND_ENTRY}▶ [ENTRY] {request_id:<40} | {ts} | tid={tid:<7} | {src:<21} → {dst}{req_val}{C.RESET}")
         # Do NOT call complete_resource_tracking here.
         # The server spawns one thread per connection; that thread exits after
         # replying, which fires handle_exit_event → complete_resource_tracking
         # (thread_exit=True) — exactly the same path as SSL requests.
+
+    def handle_cpu_burst_event(self, cpu, data, size):
+        ev = self.bpf["cpu_burst_events"].event(data)
+        tid = ev.tid
+        d = self.tid_burst_debug.setdefault(tid, {'count': 0, 'total_ms': 0.0, 'cycles': 0, 'insns': 0})
+        d['count']    += 1
+        d['total_ms'] += ev.burst_ns / 1_000_000.0
+        d['cycles']   += ev.cycles
+        d['insns']    += ev.instructions
+
+    def _send_to_log_handler(self):
+        """Serialize all recorded data and POST to the central log-handler."""
+        if not self.log_handler_url:
+            return
+        import json
+        import urllib.request
+
+        payload = {
+            'machine_id': os.environ.get('MACHINE_ID', socket.gethostname()),
+            'timestamp': datetime.now().isoformat(),
+            'pids': self.pids,
+            'requests': self.recorded_requests,
+            'connections': self.recorded_connections,
+        }
+
+        data = json.dumps(payload).encode('utf-8')
+        req = urllib.request.Request(
+            self.log_handler_url,
+            data=data,
+            headers={'Content-Type': 'application/json'},
+            method='POST'
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                print(f"[LOG-HANDLER] Data sent successfully: {resp.status}")
+        except Exception as e:
+            print(f"[LOG-HANDLER] Failed to send data: {e}")
+            # Fallback: dump to local JSON file
+            fallback = f"usc_dump_{int(time.time())}.json"
+            with open(fallback, 'w') as f:
+                json.dump(payload, f, indent=2)
+            print(f"[LOG-HANDLER] Dumped to {fallback}")
+
+    def _flush_unexited_at_exit(self):
+        """At USC exit: emit THREAD EXIT blocks for every tracked request that never got one."""
+        # Collect all non-temporary request IDs currently in the BPF map
+        bpf_ids = set()
+        try:
+            resource_map = self.bpf.get_table("request_resources")
+            for k, _ in resource_map.items():
+                rid = k.id.decode('utf-8', 'ignore').rstrip('\x00')
+                if rid and not rid.startswith('TID_'):
+                    bpf_ids.add(rid)
+        except Exception:
+            pass
+
+        # Also include any requests only in the Python list (BPF entry evicted/full)
+        recorded_ids = {r['id'] for r in self.recorded_requests}
+
+        pending = sorted((bpf_ids | recorded_ids) - self.exited_requests)
+        if not pending:
+            return
+
+        print(f"\n\n{'='*60}")
+        print("  FLUSHING UNEXITED REQUESTS ON USC EXIT  ".center(60))
+        print(f"{'='*60}")
+
+        for rid in pending:
+            if rid in bpf_ids:
+                # BPF map holds the data — compute latency as of now and print
+                self.complete_resource_tracking(rid, thread_exit=True)
+            else:
+                # BPF entry is gone; fall back to the stored Python record
+                record = next((r for r in self.recorded_requests if r['id'] == rid), None)
+                if record:
+                    print()
+                    print(f"{C.EXIT}{C.BOLD}{IND_EXIT}✔ [THREAD EXIT] {rid}{C.RESET}")
+                    self.print_table_header()
+                    self.print_table_row(record)
+                    print(f"{IND_CPU}↳ [CPU DETAILED] Bursts: 0 | Avg Duration: 0.000 ms | Total CPU: 0.000 ms")
+                    print(f"{IND_CPU}               Avg Cycles: 0 | Total Cycles: 0")
+                    print(f"{IND_CPU}               Avg Instructions: 0 | Total Instructions: 0")
+                    self.exited_requests.add(rid)
 
     def run(self):
         print("="*60)
@@ -681,20 +919,33 @@ class IntegratedSnifferFull:
         self.bpf["mem_events"].open_perf_buffer(self.handle_mem_event,     lost_cb=_no_lost)
         self.bpf["exit_events"].open_perf_buffer(self.handle_exit_event,   lost_cb=_no_lost)
         self.bpf["conn_events"].open_perf_buffer(self.handle_conn_event,   lost_cb=_no_lost)
-        self.bpf["thrift_events"].open_perf_buffer(self.handle_thrift_event, lost_cb=_no_lost)
+        self.bpf["thrift_events"].open_perf_buffer(self.handle_thrift_event,   lost_cb=_no_lost)
+        self.bpf["thrift_out_events"].open_perf_buffer(self.handle_thrift_out_event, lost_cb=_no_lost)
+        self.bpf["cpu_burst_events"].open_perf_buffer(self.handle_cpu_burst_event, lost_cb=_no_lost)
         
+        def _print_summary():
+            self._flush_unexited_at_exit()
+            print("\n\n" + "="*238)
+            print("FINAL SESSION SUMMARY".center(242))
+            print(f"{'#':<4}", end=""); self.print_table_header()
+            for i, r in enumerate(self.recorded_requests, 1):
+                print(f"{i:<4}", end="")
+                self.print_table_row(r)
+            print("="*238)
+            print(f"Total requests logged: {len(self.recorded_requests)}")
+            print(f"Memory log saved to: {LOG_FILENAME}")
+            self._send_to_log_handler()
+            sys.stdout.flush()
+            self.log_file.close()
+
+        signal.signal(signal.SIGTERM, lambda *_: (_print_summary(), sys.exit(0)))
+
         while True:
             try:
-                self.bpf.perf_buffer_poll()
+                self.bpf.perf_buffer_poll(timeout=0)
+                time.sleep(0.0001)
             except KeyboardInterrupt:
-                print("\n\n" + "="*238)
-                print("FINAL SESSION SUMMARY".center(238))
-                self.print_table_header()
-                for r in self.recorded_requests:
-                    self.print_table_row(r)
-                print("="*238)
-                print(f"Memory log saved to: {LOG_FILENAME}")
-                self.log_file.close()
+                _print_summary()
                 break
 
 if __name__ == "__main__":
@@ -705,6 +956,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--pid", type=int, nargs="+", required=True,
                         help="One or more target PIDs to monitor")
+    parser.add_argument("--log-handler", type=str, default=None,
+                        help="URL of central log-handler (e.g. http://10.0.0.1:5000/ingest)")
     args = parser.parse_args()
 
-    IntegratedSnifferFull(args.pid).run()
+    sniffer = IntegratedSnifferFull(args.pid)
+    sniffer.log_handler_url = args.log_handler or os.environ.get("LOG_HANDLER_URL")
+    sniffer.run()
