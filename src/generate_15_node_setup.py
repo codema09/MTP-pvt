@@ -321,7 +321,7 @@ else
 fi
 
 echo "[2/4] Starting docker-compose services..."
-docker-compose -f docker-compose-{ip}.yml up -d
+docker compose -f docker-compose-{ip}.yml up -d
 
 echo "[3/4] Extracting PIDs and populating service_mapping.txt..."
 sleep 5
@@ -330,7 +330,7 @@ sleep 5
 touch ../service_mapping.txt
 
 PIDS=""
-for container in $(docker-compose -f docker-compose-{ip}.yml ps -q); do
+for container in $(docker compose -f docker-compose-{ip}.yml ps -q); do
     PID=$(docker inspect -f '{{{{.State.Pid}}}}' $container)
     NAME=$(docker inspect -f '{{{{.Name}}}}' $container | sed 's/\\///' | sed 's/_[0-9]\\+$//' )
     echo "$NAME: $PID" >> ../service_mapping.txt
