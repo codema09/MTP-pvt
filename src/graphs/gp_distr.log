@@ -1,0 +1,665 @@
+================================================================================
+                          DISTRIBUTED CALL GRAPH (DAG)                          
+================================================================================
+Machines reported: 4  |  Total requests: 275  |  Total edges: 271  
+
+└── ComposePost_seq0_05adee7c6572bd5a  [10.0.1.10:9090] (10099.19ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── ComposeUniqueId_seq0_0edb3c3f93e46fc8  [10.0.1.62:9090] (0.60ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+    ├── ComposeText_seq0_7ec6cbcc15aad283  [10.0.1.7:9090] (13.73ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+    │   ├── ComposeUserMentions_seq0_6ba286c918b56639  [10.0.1.69:9090] (0.26ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+    │   └── ComposeUrls_seq0_b67646ee7f8a2844  [10.0.1.254:9090] (0.31ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+    ├── WriteUserTimeline_seq0_091b1913f8dd9e96  [10.0.1.87:9090] (3.31ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    ├── WriteHomeTimeline_seq0_30ccbc3cc12fb968  [10.0.1.84:9090] (4.89ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │   ├── GetFollowers_seq0_6578fa13cbb45b1c  [10.0.1.76:9090] (5.72ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    │   └── GetFollowers_seq0_62d1056aa0fce24c  [10.0.1.76:9090] (3.87ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    ├── ComposeMedia_seq0_56f8716c004503a5  [10.0.1.65:9090] (0.52ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+    ├── WriteUserTimeline_seq0_b869f15f70d8a546  [10.0.1.87:9090] (12.29ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    ├── WriteHomeTimeline_seq0_6799ab9581277eeb  [10.0.1.84:9090] (15.01ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │   └── GetFollowers_seq0_cc3dd26869e4bbcb  [10.0.1.76:9090] (10.09ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    ├── StorePost_seq0_8d8951ab3aebf064  [10.0.1.79:9090] (1.36ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+    └── ComposeCreatorWithUserId_seq0_c824ebbea410ae52  [10.0.1.64:9090] (0.29ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+
+└── ComposePost_seq0_07776fef190d3f18  [10.0.1.10:9090] (10026.72ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── ComposeCreatorWithUserId_seq0_d38ba48c656a10a9  [10.0.1.64:9090] (0.27ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+    ├── WriteUserTimeline_seq0_00349765e60bd511  [10.0.1.87:9090] (2.25ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    ├── WriteHomeTimeline_seq0_b4d4d8da226a247b  [10.0.1.84:9090] (3.05ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │   ├── GetFollowers_seq0_3b143bb8197d1975  [10.0.1.76:9090] (6.29ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    │   └── GetFollowers_seq0_fefbe196714b93cb  [10.0.1.76:9090] (2.06ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    ├── ComposeMedia_seq0_8e3b5a279a11284c  [10.0.1.65:9090] (0.20ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+    ├── ComposeUniqueId_seq0_54bc1c1d2c5848d6  [10.0.1.62:9090] (0.21ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+    ├── StorePost_seq0_24e0e2042d46fde2  [10.0.1.79:9090] (1.83ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+    └── ComposeText_seq0_c86d02c70d445e09  [10.0.1.7:9090] (4.49ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+        ├── ComposeUserMentions_seq0_97c45b3dfa425cd9  [10.0.1.69:9090] (0.19ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+        └── ComposeUrls_seq0_11d24f46b8ae407e  [10.0.1.254:9090] (1.89ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+
+└── ComposePost_seq0_0dbb26a151ff5c0a  [10.0.1.10:9090] (10075.30ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── ComposeMedia_seq0_c3cba9e7a214a956  [10.0.1.65:9090] (0.21ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+    ├── WriteUserTimeline_seq0_4d0a8ff058364c5a  [10.0.1.87:9090] (6.31ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    ├── WriteHomeTimeline_seq0_8ebad94334144648  [10.0.1.84:9090] (2.79ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │   └── GetFollowers_seq0_c25c1783ea417632  [10.0.1.76:9090] (1.90ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    ├── ComposeUniqueId_seq0_6346cf77857042be  [10.0.1.62:9090] (0.22ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+    ├── ComposeCreatorWithUserId_seq0_ee6c1059a47bef5f  [10.0.1.64:9090] (0.28ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+    ├── ComposeText_seq0_a2826403ea0477bf  [10.0.1.7:9090] (3.62ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+    │   ├── ComposeUrls_seq0_398ff172e3af6fa5  [10.0.1.254:9090] (0.32ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+    │   └── ComposeUserMentions_seq0_bf1da779989aa8dc  [10.0.1.69:9090] (0.19ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+    ├── WriteHomeTimeline_seq0_ca51c13484d0cdc3  [10.0.1.84:9090] (18.77ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │   ├── GetFollowers_seq0_4b467fb759393b97  [10.0.1.76:9090] (1.93ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    │   └── GetFollowers_seq0_7313c94ddf155fc3  [10.0.1.76:9090] (11.67ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    └── StorePost_seq0_35a2650b65538aad  [10.0.1.79:9090] (4.49ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+
+└── ComposePost_seq0_19c0f9e3da424c99  [10.0.1.10:9090] (10051.33ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── WriteHomeTimeline_seq0_474074014ceba583  [10.0.1.84:9090] (3.86ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │   └── GetFollowers_seq0_42ac9f51c1e2d306  [10.0.1.76:9090] (2.82ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    ├── ComposeCreatorWithUserId_seq0_6f3d6c801b292db7  [10.0.1.64:9090] (0.21ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+    ├── ComposeText_seq0_95dd66cee25cd495  [10.0.1.7:9090] (5.10ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+    │   ├── ComposeUrls_seq0_4b7f8b39558e9de8  [10.0.1.254:9090] (1.33ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+    │   └── ComposeUserMentions_seq0_a05063150e25c488  [10.0.1.69:9090] (0.24ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+    ├── WriteUserTimeline_seq0_5bb174e97fbcd200  [10.0.1.87:9090] (2.84ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    ├── ComposeUniqueId_seq0_279a7ea13de6960f  [10.0.1.62:9090] (0.20ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+    ├── ComposeMedia_seq0_a7fcb00178aa7950  [10.0.1.65:9090] (0.30ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+    └── StorePost_seq0_d14c64ae7b66e924  [10.0.1.79:9090] (1.52ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+
+└── ComposePost_seq0_1afb2e8c24f18eea  [10.0.1.10:9090] (10034.28ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── WriteUserTimeline_seq0_e237956a220c18c4  [10.0.1.87:9090] (3.36ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    ├── WriteHomeTimeline_seq0_30ccbc3cc12fb968  [10.0.1.84:9090] (4.89ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │       (cycle detected, skipping)
+    ├── ComposeCreatorWithUserId_seq0_b61465b6bb9f49f7  [10.0.1.64:9090] (0.19ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+    ├── ComposeMedia_seq0_edc198df6dba1822  [10.0.1.65:9090] (0.36ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+    ├── ComposeUniqueId_seq0_7d5dbf822b04558e  [10.0.1.62:9090] (0.31ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+    ├── StorePost_seq0_d2850d0e3a8ef951  [10.0.1.79:9090] (2.45ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+    └── ComposeText_seq0_ab331fb4dec63f86  [10.0.1.7:9090] (6.70ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+        ├── ComposeUserMentions_seq0_4225738ae2159c92  [10.0.1.69:9090] (0.31ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+        └── ComposeUrls_seq0_620bb34f821b1fa4  [10.0.1.254:9090] (0.76ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+
+└── ComposePost_seq0_440cbcd65fe224da  [10.0.1.10:9090] (10063.73ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── ComposeUniqueId_seq0_37b07b22a35795f6  [10.0.1.62:9090] (0.61ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+    ├── StorePost_seq0_f7a1c7d2667a18ca  [10.0.1.79:9090] (1.20ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+    ├── WriteHomeTimeline_seq0_8c5cd86026d9ef09  [10.0.1.84:9090] (8.82ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │   ├── GetFollowers_seq0_42ac9f51c1e2d306  [10.0.1.76:9090] (2.82ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    │   │       (cycle detected, skipping)
+    │   └── GetFollowers_seq0_aef782e43f98960b  [10.0.1.76:9090] (5.51ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    ├── ComposeMedia_seq0_b923024c6bd71895  [10.0.1.65:9090] (0.22ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+    ├── ComposeText_seq0_18851140b25f1b72  [10.0.1.7:9090] (5.31ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+    │   ├── ComposeUserMentions_seq0_cd0030f38aad60de  [10.0.1.69:9090] (0.19ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+    │   └── ComposeUrls_seq0_81677693ade14b18  [10.0.1.254:9090] (1.13ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+    ├── WriteUserTimeline_seq0_055fab040ba4ae42  [10.0.1.87:9090] (4.16ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    └── ComposeCreatorWithUserId_seq0_8b5204b13ca07e24  [10.0.1.64:9090] (0.22ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+
+└── ComposePost_seq0_46fb9243592de1b2  [10.0.1.10:9090] (10082.56ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── ComposeText_seq0_3b7330d4770adc91  [10.0.1.7:9090] (7.73ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+    │   ├── ComposeUrls_seq0_b47174b1ae25b2f2  [10.0.1.254:9090] (1.41ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+    │   └── ComposeUserMentions_seq0_a6e8c62d5cff245c  [10.0.1.69:9090] (3.14ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+    ├── ComposeCreatorWithUserId_seq0_d09a1a0085abcc82  [10.0.1.64:9090] (1.59ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+    ├── ComposeUniqueId_seq0_261321dbe9f3e413  [10.0.1.62:9090] (1.77ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+    ├── StorePost_seq0_bbc989ff5588b7a0  [10.0.1.79:9090] (2.88ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+    ├── ComposeMedia_seq0_7df234533b72eb12  [10.0.1.65:9090] (1.62ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+    ├── WriteUserTimeline_seq0_dbf39310050993c1  [10.0.1.87:9090] (9.19ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    └── WriteHomeTimeline_seq0_d5f5da56b8a49eea  [10.0.1.84:9090] (12.68ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+        └── GetFollowers_seq0_3a9852cb3f8ddc26  [10.0.1.76:9090] (5.96ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+
+└── ComposePost_seq0_4714653c23882b39  [10.0.1.10:9090] (10032.82ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── StorePost_seq0_20ce221ae70fc394  [10.0.1.79:9090] (1.34ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+    ├── ComposeText_seq0_aca29999d744b77c  [10.0.1.7:9090] (4.16ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+    │   ├── ComposeUserMentions_seq0_0d69728d15d81088  [10.0.1.69:9090] (0.24ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+    │   └── ComposeUrls_seq0_7a96099380e8d5f0  [10.0.1.254:9090] (0.20ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+    ├── ComposeCreatorWithUserId_seq0_87cad78d1dd7394a  [10.0.1.64:9090] (0.31ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+    ├── ComposeUniqueId_seq0_eb341cea08056504  [10.0.1.62:9090] (0.34ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+    ├── WriteUserTimeline_seq0_c9de514efd1d1eb2  [10.0.1.87:9090] (3.43ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    ├── WriteHomeTimeline_seq0_05e8e0862eda2e4f  [10.0.1.84:9090] (6.01ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │   ├── GetFollowers_seq0_9e87db20f9eb2770  [10.0.1.76:9090] (2.90ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    │   └── GetFollowers_seq0_a3c46435d616148b  [10.0.1.76:9090] (5.21ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    └── ComposeMedia_seq0_feb396708e24e901  [10.0.1.65:9090] (0.49ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+
+└── ComposePost_seq0_514c5681834dff29  [10.0.1.10:9090] (10062.24ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── ComposeUniqueId_seq0_333d481dcb60b670  [10.0.1.62:9090] (0.23ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+    ├── ComposeCreatorWithUserId_seq0_ab0c7abfd28bdbc7  [10.0.1.64:9090] (0.43ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+    ├── WriteUserTimeline_seq0_055fab040ba4ae42  [10.0.1.87:9090] (4.16ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    │       (cycle detected, skipping)
+    ├── WriteHomeTimeline_seq0_b3ddf6de0f6defdd  [10.0.1.84:9090] (14.12ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │   └── GetFollowers_seq0_fa0966984cd85e7d  [10.0.1.76:9090] (5.05ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    ├── ComposeText_seq0_05cb24934c38b2f6  [10.0.1.7:9090] (2.70ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+    │   ├── ComposeUserMentions_seq0_0ae69f8c781f5923  [10.0.1.69:9090] (0.27ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+    │   └── ComposeUrls_seq0_978e6927025bc753  [10.0.1.254:9090] (0.62ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+    ├── StorePost_seq0_8d82aa35be26a3a8  [10.0.1.79:9090] (1.34ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+    ├── WriteUserTimeline_seq0_7205630bafcc10fa  [10.0.1.87:9090] (3.30ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    └── ComposeMedia_seq0_79c83ac1011f9d02  [10.0.1.65:9090] (0.18ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+
+└── ComposePost_seq0_6e00fcc32b534b82  [10.0.1.10:9090] (10065.13ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── ComposeText_seq0_4911ac22d965ba74  [10.0.1.7:9090] (3.76ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+    │   ├── ComposeUrls_seq0_f224d32df00d9b59  [10.0.1.254:9090] (0.41ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+    │   └── ComposeUserMentions_seq0_afa8a7f7bb5978b9  [10.0.1.69:9090] (0.18ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+    ├── WriteHomeTimeline_seq0_cd2b68b81f34fc3b  [10.0.1.84:9090] (11.84ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │   └── GetFollowers_seq0_c753bd9ff9cc1543  [10.0.1.76:9090] (10.36ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    ├── WriteUserTimeline_seq0_6e740257f42d2182  [10.0.1.87:9090] (1.60ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    ├── StorePost_seq0_12e455224cddccf2  [10.0.1.79:9090] (1.04ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+    ├── ComposeMedia_seq0_8860b99526180188  [10.0.1.65:9090] (0.33ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+    ├── WriteHomeTimeline_seq0_fda0688afa85d70c  [10.0.1.84:9090] (7.84ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │   └── GetFollowers_seq0_3b143bb8197d1975  [10.0.1.76:9090] (6.29ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    │           (cycle detected, skipping)
+    ├── ComposeCreatorWithUserId_seq0_4fd995460fdd8916  [10.0.1.64:9090] (0.22ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+    ├── ComposeUniqueId_seq0_5c1b5fe064b22ef9  [10.0.1.62:9090] (0.17ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+    └── WriteUserTimeline_seq0_d22b20931cc27aee  [10.0.1.87:9090] (13.15ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+
+└── ComposePost_seq0_76a56105be8dfa5d  [10.0.1.10:9090] (10092.05ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── ComposeCreatorWithUserId_seq0_7f79030a2f85b2fd  [10.0.1.64:9090] (0.63ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+    ├── WriteUserTimeline_seq0_3696ece0dee6fff1  [10.0.1.87:9090] (2.45ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    ├── WriteHomeTimeline_seq0_84dcf33198999ac2  [10.0.1.84:9090] (2.74ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │   ├── GetFollowers_seq0_aef782e43f98960b  [10.0.1.76:9090] (5.51ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    │   │       (cycle detected, skipping)
+    │   └── GetFollowers_seq0_5ab8b43e3e5488e3  [10.0.1.76:9090] (1.75ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    ├── ComposeUniqueId_seq0_d42ad0be0c8b3ac8  [10.0.1.62:9090] (0.40ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+    ├── StorePost_seq0_eab215a6d6a14ae6  [10.0.1.79:9090] (1.45ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+    ├── ComposeMedia_seq0_d7b2672310db7242  [10.0.1.65:9090] (0.59ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+    ├── ComposeText_seq0_e8171df88ea21e1c  [10.0.1.7:9090] (8.15ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+    │   ├── ComposeUserMentions_seq0_e1f0af987ba48c31  [10.0.1.69:9090] (0.38ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+    │   └── ComposeUrls_seq0_ba7fe1c180abade8  [10.0.1.254:9090] (0.89ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+    └── WriteHomeTimeline_seq0_a9c9b2502fb10adf  [10.0.1.84:9090] (16.18ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+        └── GetFollowers_seq0_c30e622fbda159dc  [10.0.1.76:9090] (5.54ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+
+└── ComposePost_seq0_7c3ac825d9e96503  [10.0.1.10:9090] (10054.46ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── StorePost_seq0_5fe2cbed190806eb  [10.0.1.79:9090] (1.13ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+    ├── ComposeText_seq0_cfd4b5a2a25291d1  [10.0.1.7:9090] (3.19ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+    │   ├── ComposeUserMentions_seq0_5a7249653abc6520  [10.0.1.69:9090] (0.27ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+    │   └── ComposeUrls_seq0_358a864cd0e3fb2b  [10.0.1.254:9090] (0.86ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+    ├── ComposeUniqueId_seq0_01078b42ac25fa1a  [10.0.1.62:9090] (0.25ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+    ├── ComposeMedia_seq0_49341eb63a7ed4e0  [10.0.1.65:9090] (0.19ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+    ├── WriteUserTimeline_seq0_2a1170ddf51284e4  [10.0.1.87:9090] (2.91ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    ├── WriteHomeTimeline_seq0_1de35f6095a7f776  [10.0.1.84:9090] (4.15ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │   └── GetFollowers_seq0_db519addb42c8ddc  [10.0.1.76:9090] (2.68ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    └── ComposeCreatorWithUserId_seq0_61291bdd04f88652  [10.0.1.64:9090] (0.58ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+
+└── ComposePost_seq0_83363cfe46a8f4e5  [10.0.1.10:9090] (10049.71ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── WriteHomeTimeline_seq0_dce7b49764c6b5ab  [10.0.1.84:9090] (14.22ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │   ├── GetFollowers_seq0_5ab8b43e3e5488e3  [10.0.1.76:9090] (1.75ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    │   │       (cycle detected, skipping)
+    │   └── GetFollowers_seq0_aad5c11064177815  [10.0.1.76:9090] (7.84ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    ├── ComposeMedia_seq0_d82c87a0fb2b7804  [10.0.1.65:9090] (0.38ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+    ├── ComposeText_seq0_11e26ac2692fdda5  [10.0.1.7:9090] (5.01ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+    │   ├── ComposeUserMentions_seq0_085108978cf40248  [10.0.1.69:9090] (0.30ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+    │   └── ComposeUrls_seq0_91cdfce94b787f4b  [10.0.1.254:9090] (0.23ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+    ├── ComposeCreatorWithUserId_seq0_293f4fce155766e4  [10.0.1.64:9090] (0.25ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+    ├── StorePost_seq0_12af66c2a161e929  [10.0.1.79:9090] (1.52ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+    ├── WriteUserTimeline_seq0_b69fb8f67edd5333  [10.0.1.87:9090] (5.88ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    └── ComposeUniqueId_seq0_3240d2069e0d6237  [10.0.1.62:9090] (0.50ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+
+└── ComposePost_seq0_89eccf2bd5414947  [10.0.1.10:9090] (10087.73ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── ComposeCreatorWithUserId_seq0_3df841400cc05d16  [10.0.1.64:9090] (0.31ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+    ├── WriteUserTimeline_seq0_5bb174e97fbcd200  [10.0.1.87:9090] (2.84ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    │       (cycle detected, skipping)
+    ├── WriteHomeTimeline_seq0_05e8e0862eda2e4f  [10.0.1.84:9090] (6.01ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │       (cycle detected, skipping)
+    ├── ComposeMedia_seq0_8b69510a758e9aea  [10.0.1.65:9090] (0.28ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+    ├── ComposeUniqueId_seq0_61428093fdd1ca2e  [10.0.1.62:9090] (0.32ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+    ├── StorePost_seq0_379a84f5fe3648a9  [10.0.1.79:9090] (1.19ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+    ├── ComposeText_seq0_349133e451eeafc6  [10.0.1.7:9090] (15.03ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+    │   ├── ComposeUserMentions_seq0_6cce63b65a7e4f08  [10.0.1.69:9090] (0.57ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+    │   └── ComposeUrls_seq0_398ba2adf1c9a36a  [10.0.1.254:9090] (1.61ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+    ├── WriteUserTimeline_seq0_9b22598f11cec1dd  [10.0.1.87:9090] (13.36ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    └── WriteHomeTimeline_seq0_715c7ae956bd709d  [10.0.1.84:9090] (7.85ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+        └── GetFollowers_seq0_9e87db20f9eb2770  [10.0.1.76:9090] (2.90ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+                (cycle detected, skipping)
+
+└── ComposePost_seq0_957a79828f780e94  [10.0.1.10:9090] (10043.15ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── ComposeUniqueId_seq0_23084c23f71c9830  [10.0.1.62:9090] (0.32ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+    ├── WriteUserTimeline_seq0_8385e0dbb22972f6  [10.0.1.87:9090] (1.68ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    ├── WriteHomeTimeline_seq0_ab46909599108f87  [10.0.1.84:9090] (2.84ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │   └── GetFollowers_seq0_4b467fb759393b97  [10.0.1.76:9090] (1.93ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    │           (cycle detected, skipping)
+    ├── ComposeMedia_seq0_9daf05346c55afe0  [10.0.1.65:9090] (0.30ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+    ├── ComposeCreatorWithUserId_seq0_51a8b12f13396182  [10.0.1.64:9090] (0.42ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+    ├── ComposeText_seq0_f876ca69bf9d0bb4  [10.0.1.7:9090] (3.76ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+    │   ├── ComposeUserMentions_seq0_6b38650228ae21c5  [10.0.1.69:9090] (0.43ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+    │   └── ComposeUrls_seq0_4d5fc1f6834949d3  [10.0.1.254:9090] (0.36ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+    └── StorePost_seq0_5c608c1899c034a6  [10.0.1.79:9090] (1.20ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+
+└── ComposePost_seq0_ac8ac8fe7a676b17  [10.0.1.10:9090] (10058.32ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── WriteHomeTimeline_seq0_1b82d5430d925af6  [10.0.1.84:9090] (14.02ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │   └── GetFollowers_seq0_65714f3aefa6f6cb  [10.0.1.76:9090] (8.71ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    ├── WriteUserTimeline_seq0_bf55eb71882f8a5c  [10.0.1.87:9090] (4.14ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    ├── StorePost_seq0_02a102fadc74976c  [10.0.1.79:9090] (1.88ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+    ├── ComposeText_seq0_2019d6801aff1655  [10.0.1.7:9090] (7.46ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+    │   ├── ComposeUserMentions_seq0_9cb09bbe2104eb48  [10.0.1.69:9090] (0.16ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+    │   └── ComposeUrls_seq0_347951e39afebfdd  [10.0.1.254:9090] (0.44ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+    ├── ComposeMedia_seq0_9e09bf9b67fbc508  [10.0.1.65:9090] (0.19ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+    ├── ComposeCreatorWithUserId_seq0_bf741ac22cf9ad60  [10.0.1.64:9090] (0.67ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+    └── ComposeUniqueId_seq0_d1aff555af8eaf76  [10.0.1.62:9090] (0.21ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+
+└── ComposePost_seq0_b52edc8bdf591753  [10.0.1.10:9090] (10033.30ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── ComposeText_seq0_c3b9bbd755836133  [10.0.1.7:9090] (5.17ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+    │   ├── ComposeUserMentions_seq0_e8be0e7814b38965  [10.0.1.69:9090] (0.18ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+    │   └── ComposeUrls_seq0_b952b9b920a911cc  [10.0.1.254:9090] (0.23ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+    ├── ComposeUniqueId_seq0_20b2c94166d9e787  [10.0.1.62:9090] (0.33ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+    ├── WriteUserTimeline_seq0_be7cfd845cffe7f8  [10.0.1.87:9090] (2.32ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    ├── WriteHomeTimeline_seq0_c04db05b0bc86516  [10.0.1.84:9090] (2.61ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │   └── GetFollowers_seq0_d662d91af97d78e6  [10.0.1.76:9090] (1.71ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    ├── ComposeCreatorWithUserId_seq0_2b501cc8ca8688c8  [10.0.1.64:9090] (0.32ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+    ├── ComposeMedia_seq0_fee89e3a69d0fa7f  [10.0.1.65:9090] (0.63ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+    └── StorePost_seq0_8d8d14e6db6d0682  [10.0.1.79:9090] (1.53ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+
+└── ComposePost_seq0_c238c073d2657a02  [10.0.1.10:9090] (10081.06ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── StorePost_seq0_12af66c2a161e929  [10.0.1.79:9090] (1.52ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+    │       (cycle detected, skipping)
+    ├── ComposeText_seq0_c77869fc2f34f750  [10.0.1.7:9090] (8.32ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+    │   ├── ComposeUserMentions_seq0_d724f5f17791b1c0  [10.0.1.69:9090] (0.16ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+    │   └── ComposeUrls_seq0_716c309260fd4ed3  [10.0.1.254:9090] (0.24ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+    ├── ComposeUniqueId_seq0_8c496e800657262a  [10.0.1.62:9090] (0.48ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+    ├── StorePost_seq0_694d4b584a6f7e9e  [10.0.1.79:9090] (5.06ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+    ├── ComposeMedia_seq0_02237892d98b77e5  [10.0.1.65:9090] (0.23ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+    ├── WriteUserTimeline_seq0_b69fb8f67edd5333  [10.0.1.87:9090] (5.88ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    │       (cycle detected, skipping)
+    ├── WriteHomeTimeline_seq0_1de35f6095a7f776  [10.0.1.84:9090] (4.15ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │       (cycle detected, skipping)
+    ├── WriteUserTimeline_seq0_f9f673c6e467e798  [10.0.1.87:9090] (3.61ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    ├── WriteHomeTimeline_seq0_28a2b9f66f869eb0  [10.0.1.84:9090] (10.83ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │   └── GetFollowers_seq0_7327ccfa55999e8e  [10.0.1.76:9090] (2.09ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    └── ComposeCreatorWithUserId_seq0_3381c9ae9bcac1db  [10.0.1.64:9090] (0.29ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+
+└── ComposePost_seq0_cfcfdbb3757bc1a8  [10.0.1.10:9090] (10042.06ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── ComposeMedia_seq0_1875ee800309aa52  [10.0.1.65:9090] (0.26ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+    ├── WriteUserTimeline_seq0_6e740257f42d2182  [10.0.1.87:9090] (1.60ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    │       (cycle detected, skipping)
+    ├── WriteHomeTimeline_seq0_8ebad94334144648  [10.0.1.84:9090] (2.79ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │       (cycle detected, skipping)
+    ├── ComposeText_seq0_4d2b50741808fddc  [10.0.1.7:9090] (4.38ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+    │   ├── ComposeUrls_seq0_df96ae0371eee3ab  [10.0.1.254:9090] (0.30ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+    │   └── ComposeUserMentions_seq0_e6c7600623aeabf5  [10.0.1.69:9090] (0.24ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+    ├── ComposeCreatorWithUserId_seq0_b1bbc2f457374b64  [10.0.1.64:9090] (0.27ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+    ├── ComposeUniqueId_seq0_b2e0b6ba002a69de  [10.0.1.62:9090] (0.32ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+    └── StorePost_seq0_3116cbcd81a0ff22  [10.0.1.79:9090] (0.89ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+
+└── ComposePost_seq0_d0cab3ec4d7b21a7  [10.0.1.10:9090] (10037.38ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── WriteUserTimeline_seq0_7a6d547a1d317c14  [10.0.1.87:9090] (1.77ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    ├── WriteHomeTimeline_seq0_f9ebdad37b4be60a  [10.0.1.84:9090] (2.45ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │   └── GetFollowers_seq0_5bc2b88b7e1f5a53  [10.0.1.76:9090] (1.45ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    ├── ComposeMedia_seq0_726b216a614f5241  [10.0.1.65:9090] (0.23ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+    ├── StorePost_seq0_d40e9e7d9a7567ff  [10.0.1.79:9090] (1.15ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+    ├── ComposeUniqueId_seq0_9f09fdb4ac4efb7b  [10.0.1.62:9090] (0.39ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+    ├── ComposeText_seq0_9ed03b445d6920ab  [10.0.1.7:9090] (5.75ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+    │   ├── ComposeUrls_seq0_85b7fffcfb73655c  [10.0.1.254:9090] (0.29ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+    │   └── ComposeUserMentions_seq0_3f76eb5af3c5d987  [10.0.1.69:9090] (0.19ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+    └── ComposeCreatorWithUserId_seq0_b3fec61a78deef9d  [10.0.1.64:9090] (0.30ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+
+└── ComposePost_seq0_d2b3a7980ca8d8ef  [10.0.1.10:9090] (10019.02ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── ComposeText_seq0_2931255563053962  [10.0.1.7:9090] (5.67ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+    │   ├── ComposeUserMentions_seq0_4634e4b40e4a10ce  [10.0.1.69:9090] (0.25ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+    │   └── ComposeUrls_seq0_f2d1ba1a8a51dafe  [10.0.1.254:9090] (0.81ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+    ├── ComposeUniqueId_seq0_de3e301da85e280d  [10.0.1.62:9090] (0.29ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+    ├── StorePost_seq0_b9397fdd020d870d  [10.0.1.79:9090] (1.55ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+    ├── ComposeCreatorWithUserId_seq0_c74b7cf1588953d5  [10.0.1.64:9090] (0.29ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+    ├── WriteUserTimeline_seq0_f5418933e645a36f  [10.0.1.87:9090] (1.92ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    ├── WriteHomeTimeline_seq0_84dcf33198999ac2  [10.0.1.84:9090] (2.74ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │       (cycle detected, skipping)
+    └── ComposeMedia_seq0_1c8846551c0abf24  [10.0.1.65:9090] (0.26ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+
+└── ComposePost_seq0_db26d6454d55aca3  [10.0.1.10:9090] (10040.37ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── ComposeCreatorWithUserId_seq0_fb4100bd2f1a50b7  [10.0.1.64:9090] (0.25ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+    ├── StorePost_seq0_6bca41f3af17e10d  [10.0.1.79:9090] (1.55ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+    ├── ComposeUniqueId_seq0_6dc9000a5a68db25  [10.0.1.62:9090] (0.52ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+    ├── ComposeText_seq0_b02c99901672a51d  [10.0.1.7:9090] (9.74ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+    │   ├── ComposeUrls_seq0_f2406f7d6719dbf1  [10.0.1.254:9090] (0.68ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+    │   └── ComposeUserMentions_seq0_4bf80de5fe6b2dc4  [10.0.1.69:9090] (0.51ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+    ├── WriteUserTimeline_seq0_091b1913f8dd9e96  [10.0.1.87:9090] (3.31ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    │       (cycle detected, skipping)
+    ├── WriteHomeTimeline_seq0_f4f4250be3be8ada  [10.0.1.84:9090] (5.02ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │   ├── GetFollowers_seq0_62d1056aa0fce24c  [10.0.1.76:9090] (3.87ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    │   │       (cycle detected, skipping)
+    │   └── GetFollowers_seq0_755f38fad05bf9fa  [10.0.1.76:9090] (3.74ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    └── ComposeMedia_seq0_a07bdaaf5c94a772  [10.0.1.65:9090] (0.24ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+
+└── ComposePost_seq0_e02b08406abfefef  [10.0.1.10:9090] (10049.91ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── ComposeCreatorWithUserId_seq0_0d9fa17a9922e82f  [10.0.1.64:9090] (0.27ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+    ├── StorePost_seq0_6490b2c4c623a2ef  [10.0.1.79:9090] (1.46ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+    ├── ComposeText_seq0_0a48eccb5e63f3d2  [10.0.1.7:9090] (5.94ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+    │   ├── ComposeUserMentions_seq0_df29a40fb3cb0b85  [10.0.1.69:9090] (0.66ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+    │   └── ComposeUrls_seq0_dab62606bea3fc0c  [10.0.1.254:9090] (0.46ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+    ├── ComposeUniqueId_seq0_27de4b9387783604  [10.0.1.62:9090] (0.74ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+    ├── WriteUserTimeline_seq0_b8479febc26111ad  [10.0.1.87:9090] (1.98ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    ├── WriteHomeTimeline_seq0_cd2b68b81f34fc3b  [10.0.1.84:9090] (11.84ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │       (cycle detected, skipping)
+    └── ComposeMedia_seq0_af933548073af02b  [10.0.1.65:9090] (0.39ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+
+└── ComposePost_seq0_e8d40953c5b84b7a  [10.0.1.10:9090] (10044.51ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── WriteHomeTimeline_seq0_94dd95560a8655f9  [10.0.1.84:9090] (7.26ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │   └── GetFollowers_seq0_6578fa13cbb45b1c  [10.0.1.76:9090] (5.72ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    │           (cycle detected, skipping)
+    ├── ComposeCreatorWithUserId_seq0_3bedd7bfbbddf408  [10.0.1.64:9090] (0.50ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+    ├── WriteUserTimeline_seq0_fa7de4be4e4dafa2  [10.0.1.87:9090] (1.81ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    ├── ComposeUniqueId_seq0_cfcabec4f184af68  [10.0.1.62:9090] (0.28ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+    ├── StorePost_seq0_7a0466ed6f15fecf  [10.0.1.79:9090] (1.67ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+    ├── ComposeMedia_seq0_c845cd2f8c9eb60a  [10.0.1.65:9090] (0.73ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+    └── ComposeText_seq0_97cf98f9d71b46dc  [10.0.1.7:9090] (5.38ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+        ├── ComposeUrls_seq0_467ad6ea6614d59d  [10.0.1.254:9090] (1.06ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+        └── ComposeUserMentions_seq0_46ca752bc7a46c99  [10.0.1.69:9090] (0.26ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+
+└── ComposePost_seq0_f450cb4138c8821b  [10.0.1.10:9090] (10100.99ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
+    ├── ComposeMedia_seq0_98b398440e7d4041  [10.0.1.65:9090] (0.21ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
+    ├── WriteUserTimeline_seq0_00349765e60bd511  [10.0.1.87:9090] (2.25ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    │       (cycle detected, skipping)
+    ├── WriteHomeTimeline_seq0_edb7ac268f9a6d74  [10.0.1.84:9090] (31.13ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
+    │   └── GetFollowers_seq0_6efcc0ded3ee319e  [10.0.1.76:9090] (13.68ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
+    ├── ComposeText_seq0_fbec9812e8e6a9f6  [10.0.1.7:9090] (2.95ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
+    │   ├── ComposeUserMentions_seq0_f451613854db0e4f  [10.0.1.69:9090] (0.29ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
+    │   └── ComposeUrls_seq0_551c589331f4d1aa  [10.0.1.254:9090] (0.29ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
+    ├── WriteUserTimeline_seq0_f7cf18f949692009  [10.0.1.87:9090] (10.86ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
+    ├── ComposeUniqueId_seq0_4cce86b458da861d  [10.0.1.62:9090] (0.35ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
+    ├── ComposeCreatorWithUserId_seq0_502ac69bf6db9e35  [10.0.1.64:9090] (0.22ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+    └── StorePost_seq0_28e3d552dfb85334  [10.0.1.79:9090] (0.97ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
+
+
+================================================================================
+
+PER-REQUEST RESOURCE SUMMARY
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Request-ID                                         | Machine              | Service                                       | Latency(ms) |  CPU(ms) | Bursts |         Cycles | Virtual Mem(KB) | Peak Physical(KB) |  Send(KB) |  Recv(KB) | DiskRd(KB) | DiskWr(KB)
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ComposeCreatorWithUserId_seq0_0d9fa17a9922e82f     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.272 |    0.272 |      1 |        272,092 |             0.0 |              36.0 |       0.1 |       0.2 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_293f4fce155766e4     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.251 |    0.251 |      1 |        250,652 |           132.0 |              48.0 |       0.1 |       0.2 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_2b501cc8ca8688c8     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.318 |    0.318 |      1 |        318,140 |             0.0 |              36.0 |       0.1 |       0.2 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_3381c9ae9bcac1db     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.293 |    0.293 |      1 |        293,141 |             0.0 |              36.0 |       0.1 |       0.2 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_3bedd7bfbbddf408     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.498 |    0.498 |      1 |        503,031 |           132.0 |              48.0 |       0.1 |       0.2 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_3df841400cc05d16     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.305 |    0.305 |      1 |        305,476 |             0.0 |              36.0 |       0.1 |       0.2 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_4fd995460fdd8916     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.216 |    0.216 |      1 |        216,497 |             0.0 |              36.0 |       0.1 |       0.2 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_502ac69bf6db9e35     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.219 |    0.219 |      1 |        218,386 |             0.0 |              36.0 |       0.1 |       0.2 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_51a8b12f13396182     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.419 |    0.419 |      1 |        418,229 |           132.0 |              48.0 |       0.1 |       0.0 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_61291bdd04f88652     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.581 |    0.581 |      1 |        579,374 |           132.0 |              48.0 |       0.1 |       0.2 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_6f3d6c801b292db7     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.209 |    0.209 |      1 |        208,336 |             0.0 |              36.0 |       0.1 |       0.2 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_7f79030a2f85b2fd     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.631 |    0.631 |      1 |        630,326 |             0.0 |              36.0 |       0.1 |       0.2 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_87cad78d1dd7394a     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.312 |    0.312 |      1 |        312,101 |           132.0 |              48.0 |       0.1 |       0.2 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_8b5204b13ca07e24     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.223 |    0.223 |      1 |        222,620 |           132.0 |              48.0 |       0.1 |       0.2 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_ab0c7abfd28bdbc7     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.433 |    0.433 |      1 |        431,987 |           132.0 |              48.0 |       0.1 |       0.2 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_b1bbc2f457374b64     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.267 |    0.267 |      1 |        267,146 |             0.0 |              36.0 |       0.1 |       0.0 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_b3fec61a78deef9d     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.299 |    0.299 |      1 |        298,790 |           132.0 |              48.0 |       0.1 |       0.0 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_b61465b6bb9f49f7     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.185 |    0.185 |      1 |        185,113 |             0.0 |              36.0 |       0.1 |       0.2 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_bf741ac22cf9ad60     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.669 |    0.669 |      1 |        668,599 |             0.0 |              36.0 |       0.1 |       0.2 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_c74b7cf1588953d5     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.286 |    0.286 |      1 |        285,766 |           132.0 |              48.0 |       0.1 |       0.2 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_c824ebbea410ae52     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.287 |    0.287 |      1 |        286,835 |             0.0 |              36.0 |       0.1 |       0.2 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_d09a1a0085abcc82     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       1.586 |    0.826 |      2 |        824,635 |             0.0 |               0.0 |       0.1 |       0.0 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_d38ba48c656a10a9     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.274 |    0.274 |      1 |        274,715 |           132.0 |              48.0 |       0.1 |       0.2 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_ee6c1059a47bef5f     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.276 |    0.276 |      1 |        276,852 |             0.0 |              36.0 |       0.1 |       0.2 |        0.0 |        0.0
+ComposeCreatorWithUserId_seq0_fb4100bd2f1a50b7     | swarm-node-3         | socialnetwork-user-service-1(278394)          |       0.250 |    0.250 |      1 |        249,720 |           132.0 |              48.0 |       0.1 |       0.2 |        0.0 |        0.0
+ComposeMedia_seq0_02237892d98b77e5                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.230 |    0.230 |      1 |        230,328 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeMedia_seq0_1875ee800309aa52                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.263 |    0.263 |      1 |        262,580 |           132.0 |              48.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeMedia_seq0_1c8846551c0abf24                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.261 |    0.261 |      1 |        259,760 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeMedia_seq0_49341eb63a7ed4e0                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.190 |    0.190 |      1 |        189,666 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeMedia_seq0_56f8716c004503a5                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.519 |    0.519 |      1 |        517,931 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeMedia_seq0_726b216a614f5241                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.230 |    0.230 |      1 |        230,299 |           132.0 |              48.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeMedia_seq0_79c83ac1011f9d02                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.181 |    0.181 |      1 |        181,216 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeMedia_seq0_7df234533b72eb12                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       1.619 |    0.669 |      2 |        666,968 |             0.0 |               0.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeMedia_seq0_8860b99526180188                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.334 |    0.334 |      1 |        334,178 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeMedia_seq0_8b69510a758e9aea                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.282 |    0.282 |      1 |        281,830 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeMedia_seq0_8e3b5a279a11284c                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.202 |    0.202 |      1 |        202,409 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeMedia_seq0_98b398440e7d4041                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.207 |    0.207 |      1 |        207,240 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeMedia_seq0_9daf05346c55afe0                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.299 |    0.299 |      1 |        298,584 |             0.0 |              36.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeMedia_seq0_9e09bf9b67fbc508                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.195 |    0.195 |      1 |        194,813 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeMedia_seq0_a07bdaaf5c94a772                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.239 |    0.239 |      1 |        239,341 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeMedia_seq0_a7fcb00178aa7950                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.300 |    0.300 |      1 |        299,586 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeMedia_seq0_af933548073af02b                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.389 |    0.389 |      1 |        388,598 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeMedia_seq0_b923024c6bd71895                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.221 |    0.221 |      1 |        221,056 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeMedia_seq0_c3cba9e7a214a956                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.209 |    0.209 |      1 |        208,573 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeMedia_seq0_c845cd2f8c9eb60a                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.725 |    0.725 |      1 |        724,536 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeMedia_seq0_d7b2672310db7242                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.587 |    0.587 |      1 |        585,871 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeMedia_seq0_d82c87a0fb2b7804                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.384 |    0.384 |      1 |        383,759 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeMedia_seq0_edc198df6dba1822                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.358 |    0.358 |      1 |        357,771 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeMedia_seq0_feb396708e24e901                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.488 |    0.488 |      1 |        488,223 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeMedia_seq0_fee89e3a69d0fa7f                 | swarm-node-3         | socialnetwork-media-service-1(278554)         |       0.631 |    0.597 |      2 |        595,958 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposePost_seq0_05adee7c6572bd5a                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10099.186 |   30.292 |     52 |     30,294,751 |         25248.0 |              84.0 |       1.4 |       0.7 |        1.3 |        0.0
+ComposePost_seq0_07776fef190d3f18                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10026.717 |   15.056 |     23 |     15,058,118 |         16656.0 |              88.0 |       1.2 |       0.3 |        0.0 |        0.0
+ComposePost_seq0_0dbb26a151ff5c0a                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10075.296 |   22.954 |     37 |     22,956,689 |         16656.0 |              64.0 |       1.3 |       0.5 |        0.4 |        0.0
+ComposePost_seq0_19c0f9e3da424c99                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10051.332 |   15.211 |     30 |     15,212,315 |         24588.0 |              64.0 |       1.2 |       0.4 |        0.2 |        0.0
+ComposePost_seq0_1afb2e8c24f18eea                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10034.279 |    8.352 |     25 |      8,353,008 |          8460.0 |              48.0 |       1.2 |       0.3 |        0.0 |        0.0
+ComposePost_seq0_440cbcd65fe224da                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10063.730 |   19.718 |     25 |     19,716,822 |           132.0 |              52.0 |       1.2 |       0.3 |        0.0 |        0.0
+ComposePost_seq0_46fb9243592de1b2                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10082.556 |   20.939 |     31 |     20,940,149 |          8592.0 |              48.0 |       1.2 |       0.3 |        0.0 |        0.0
+ComposePost_seq0_4714653c23882b39                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10032.818 |    8.103 |     26 |      8,103,330 |             0.0 |              44.0 |       1.2 |       0.3 |        0.0 |        0.0
+ComposePost_seq0_514c5681834dff29                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10062.243 |   14.743 |     34 |     14,746,400 |         16524.0 |              92.0 |       1.3 |       0.5 |        0.6 |        0.0
+ComposePost_seq0_6e00fcc32b534b82                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10065.134 |   14.285 |     28 |     14,288,648 |          8196.0 |              64.0 |       1.3 |       0.5 |        0.4 |        0.0
+ComposePost_seq0_76a56105be8dfa5d                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10092.047 |   23.777 |     44 |     23,780,211 |         32916.0 |              80.0 |       1.5 |       0.8 |        1.5 |        0.0
+ComposePost_seq0_7c3ac825d9e96503                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10054.457 |    9.608 |     37 |      9,614,555 |           396.0 |              48.0 |       1.2 |       0.4 |        0.2 |        0.0
+ComposePost_seq0_83363cfe46a8f4e5                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10049.713 |   17.706 |     25 |     17,706,889 |             0.0 |              52.0 |       1.2 |       0.4 |        0.2 |        0.0
+ComposePost_seq0_89eccf2bd5414947                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10087.728 |   24.256 |     35 |     24,327,096 |           132.0 |              68.0 |       1.2 |       0.5 |        0.4 |        0.0
+ComposePost_seq0_957a79828f780e94                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10043.150 |    9.232 |     24 |      9,224,451 |         24588.0 |              68.0 |       1.1 |       0.3 |        0.0 |        0.0
+ComposePost_seq0_ac8ac8fe7a676b17                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10058.317 |   18.157 |     30 |     18,157,906 |          8328.0 |             108.0 |       1.2 |       0.5 |        0.5 |        0.0
+ComposePost_seq0_b52edc8bdf591753                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10033.295 |   10.673 |     29 |     10,671,347 |         16524.0 |             104.0 |       1.2 |       0.4 |        0.2 |        0.0
+ComposePost_seq0_c238c073d2657a02                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10081.063 |   24.588 |     40 |     24,593,341 |          8592.0 |              64.0 |       1.4 |       0.7 |        1.1 |        0.0
+ComposePost_seq0_cfcfdbb3757bc1a8                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10042.059 |   19.074 |     23 |     19,074,356 |         24588.0 |              72.0 |       1.2 |       0.3 |        0.0 |        0.0
+ComposePost_seq0_d0cab3ec4d7b21a7                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10037.382 |    6.252 |     17 |      6,252,284 |          8196.0 |              36.0 |       1.1 |       0.3 |        0.0 |        0.0
+ComposePost_seq0_d2b3a7980ca8d8ef                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10019.021 |    6.060 |     21 |      6,059,453 |             0.0 |              36.0 |       1.2 |       0.3 |        0.0 |        0.0
+ComposePost_seq0_db26d6454d55aca3                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10040.373 |   15.715 |     28 |     15,717,570 |           132.0 |              76.0 |       1.2 |       0.3 |        0.0 |        0.0
+ComposePost_seq0_e02b08406abfefef                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10049.914 |   21.065 |     36 |     21,069,881 |          8724.0 |             100.0 |       1.2 |       0.4 |        0.2 |        0.0
+ComposePost_seq0_e8d40953c5b84b7a                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10044.513 |   17.618 |     31 |     17,615,530 |           132.0 |              72.0 |       1.2 |       0.4 |        0.2 |        0.0
+ComposePost_seq0_f450cb4138c8821b                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10100.991 |   23.435 |     35 |     23,438,862 |         32916.0 |              92.0 |       1.3 |       0.5 |        0.4 |        0.0
+ComposeText_seq0_05cb24934c38b2f6                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |       2.703 |    1.723 |      7 |      1,722,540 |          8196.0 |              48.0 |       0.3 |       0.2 |        0.0 |        0.0
+ComposeText_seq0_0a48eccb5e63f3d2                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |       5.937 |    5.494 |      9 |      5,487,922 |             0.0 |              92.0 |       0.3 |       0.2 |        0.0 |        0.0
+ComposeText_seq0_11e26ac2692fdda5                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |       5.012 |    3.317 |      7 |      3,318,987 |             0.0 |              72.0 |       0.3 |       0.2 |        0.0 |        0.0
+ComposeText_seq0_18851140b25f1b72                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |       5.313 |    2.799 |      8 |      2,798,862 |          8328.0 |              64.0 |       0.3 |       0.2 |        0.0 |        0.0
+ComposeText_seq0_2019d6801aff1655                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |       7.465 |    6.003 |      7 |      6,004,678 |         16524.0 |              60.0 |       0.4 |       0.3 |        0.2 |        0.0
+ComposeText_seq0_2931255563053962                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |       5.674 |    4.574 |      8 |      4,574,006 |         16392.0 |              48.0 |       0.3 |       0.1 |        0.0 |        0.0
+ComposeText_seq0_349133e451eeafc6                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |      15.034 |   16.284 |     10 |     16,287,096 |           132.0 |              72.0 |       0.4 |       0.3 |        0.2 |        0.0
+ComposeText_seq0_3b7330d4770adc91                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |       7.729 |    8.973 |      7 |      8,973,082 |             0.0 |              32.0 |       0.3 |       0.1 |        0.0 |        0.0
+ComposeText_seq0_4911ac22d965ba74                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |       3.763 |    3.530 |      7 |      3,530,448 |          8328.0 |              64.0 |       0.3 |       0.2 |        0.0 |        0.0
+ComposeText_seq0_4d2b50741808fddc                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |       4.382 |    4.020 |      7 |      4,022,720 |         16392.0 |              92.0 |       0.3 |       0.1 |        0.0 |        0.0
+ComposeText_seq0_7ec6cbcc15aad283                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |      13.727 |    6.950 |      9 |      6,950,108 |          8196.0 |              48.0 |       0.3 |       0.2 |        0.0 |        0.0
+ComposeText_seq0_95dd66cee25cd495                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |       5.104 |    3.326 |      7 |      3,327,988 |         16392.0 |              60.0 |       0.3 |       0.2 |        0.0 |        0.0
+ComposeText_seq0_97cf98f9d71b46dc                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |       5.383 |    4.230 |     10 |      4,230,448 |           132.0 |             100.0 |       0.3 |       0.2 |        0.0 |        0.0
+ComposeText_seq0_9ed03b445d6920ab                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |       5.745 |    4.297 |      7 |      4,296,475 |          8196.0 |             104.0 |       0.3 |       0.1 |        0.0 |        0.0
+ComposeText_seq0_a2826403ea0477bf                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |       3.623 |    3.115 |      7 |      3,116,160 |             0.0 |              72.0 |       0.3 |       0.2 |        0.0 |        0.0
+ComposeText_seq0_ab331fb4dec63f86                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |       6.700 |    5.459 |      7 |      5,459,723 |         24720.0 |              76.0 |       0.3 |       0.2 |        0.0 |        0.0
+ComposeText_seq0_aca29999d744b77c                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |       4.162 |    3.552 |      6 |      3,554,469 |         16392.0 |              60.0 |       0.3 |       0.2 |        0.0 |        0.0
+ComposeText_seq0_b02c99901672a51d                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |       9.742 |    9.247 |     10 |      9,249,918 |          8328.0 |              64.0 |       0.4 |       0.3 |        0.2 |        0.0
+ComposeText_seq0_c3b9bbd755836133                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |       5.174 |    4.304 |      8 |      4,305,317 |          8328.0 |             112.0 |       0.3 |       0.2 |        0.0 |        0.0
+ComposeText_seq0_c77869fc2f34f750                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |       8.324 |    4.994 |     12 |      4,992,891 |          8592.0 |              64.0 |       0.3 |       0.2 |        0.0 |        0.0
+ComposeText_seq0_c86d02c70d445e09                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |       4.490 |    2.228 |      7 |      2,228,931 |             0.0 |              92.0 |       0.3 |       0.2 |        0.0 |        0.0
+ComposeText_seq0_cfd4b5a2a25291d1                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |       3.195 |    3.382 |      7 |      3,383,307 |             0.0 |              72.0 |       0.3 |       0.2 |        0.0 |        0.0
+ComposeText_seq0_e8171df88ea21e1c                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |       8.153 |    6.093 |     12 |      6,093,153 |             0.0 |              72.0 |       0.4 |       0.4 |        0.4 |        0.0
+ComposeText_seq0_f876ca69bf9d0bb4                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |       3.756 |    2.404 |      9 |      2,405,380 |         24720.0 |              68.0 |       0.3 |       0.1 |        0.0 |        0.0
+ComposeText_seq0_fbec9812e8e6a9f6                  | swarm-node-2         | socialnetwork-text-service-1(276188)          |       2.952 |    2.131 |      7 |      2,132,127 |          8328.0 |              64.0 |       0.3 |       0.2 |        0.0 |        0.0
+ComposeUniqueId_seq0_01078b42ac25fa1a              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.248 |    0.248 |      1 |        248,813 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUniqueId_seq0_0edb3c3f93e46fc8              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.601 |    0.601 |      1 |        599,846 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUniqueId_seq0_20b2c94166d9e787              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.326 |    0.326 |      1 |        325,705 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUniqueId_seq0_23084c23f71c9830              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.324 |    0.324 |      1 |        323,565 |           132.0 |              48.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUniqueId_seq0_261321dbe9f3e413              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       1.766 |    0.869 |      2 |        868,312 |             0.0 |               0.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUniqueId_seq0_279a7ea13de6960f              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.205 |    0.205 |      1 |        204,995 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUniqueId_seq0_27de4b9387783604              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.737 |    0.737 |      1 |        737,120 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUniqueId_seq0_3240d2069e0d6237              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.497 |    0.497 |      1 |        497,294 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUniqueId_seq0_333d481dcb60b670              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.226 |    0.226 |      1 |        225,819 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUniqueId_seq0_37b07b22a35795f6              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.607 |    0.607 |      1 |        607,736 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUniqueId_seq0_4cce86b458da861d              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.348 |    0.348 |      1 |        347,735 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUniqueId_seq0_54bc1c1d2c5848d6              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.208 |    0.208 |      1 |        207,927 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUniqueId_seq0_5c1b5fe064b22ef9              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.171 |    0.171 |      1 |        171,081 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUniqueId_seq0_61428093fdd1ca2e              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.315 |    0.315 |      1 |        315,418 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUniqueId_seq0_6346cf77857042be              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.224 |    0.224 |      1 |        223,492 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUniqueId_seq0_6dc9000a5a68db25              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.520 |    0.520 |      1 |        519,923 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUniqueId_seq0_7d5dbf822b04558e              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.308 |    0.308 |      1 |        308,250 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUniqueId_seq0_8c496e800657262a              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.480 |    0.480 |      1 |        479,685 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUniqueId_seq0_9f09fdb4ac4efb7b              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.390 |    0.390 |      1 |        389,199 |             0.0 |              36.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUniqueId_seq0_b2e0b6ba002a69de              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.315 |    0.315 |      1 |        314,822 |           132.0 |              48.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUniqueId_seq0_cfcabec4f184af68              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.277 |    0.277 |      1 |        277,480 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUniqueId_seq0_d1aff555af8eaf76              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.212 |    0.212 |      1 |        212,357 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUniqueId_seq0_d42ad0be0c8b3ac8              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.398 |    0.398 |      1 |        396,564 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUniqueId_seq0_de3e301da85e280d              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.291 |    0.291 |      1 |        291,097 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUniqueId_seq0_eb341cea08056504              | swarm-node-3         | socialnetwork-unique-id-service-1(278313)     |       0.336 |    0.336 |      1 |        335,553 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_11d24f46b8ae407e                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       1.891 |    1.891 |      1 |      1,891,207 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_347951e39afebfdd                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       0.435 |    0.435 |      1 |        433,910 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_358a864cd0e3fb2b                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       0.863 |    0.863 |      1 |        863,856 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_398ba2adf1c9a36a                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       1.614 |    1.614 |      1 |      1,614,276 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_398ff172e3af6fa5                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       0.319 |    0.261 |      2 |        255,543 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_467ad6ea6614d59d                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       1.055 |    1.055 |      1 |      1,056,297 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_4b7f8b39558e9de8                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       1.327 |    1.327 |      1 |      1,327,370 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_4d5fc1f6834949d3                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       0.356 |    0.356 |      1 |        355,526 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_551c589331f4d1aa                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       0.293 |    0.293 |      1 |        293,218 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_620bb34f821b1fa4                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       0.762 |    0.762 |      1 |        762,688 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_716c309260fd4ed3                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       0.237 |    0.237 |      1 |        237,141 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_7a96099380e8d5f0                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       0.204 |    0.204 |      1 |        204,178 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_81677693ade14b18                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       1.126 |    1.126 |      1 |      1,126,690 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_85b7fffcfb73655c                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       0.287 |    0.287 |      1 |        287,684 |           132.0 |              48.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUrls_seq0_91cdfce94b787f4b                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       0.230 |    0.230 |      1 |        230,890 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_978e6927025bc753                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       0.625 |    0.277 |      2 |        277,085 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_b47174b1ae25b2f2                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       1.411 |    1.228 |      2 |      1,226,943 |             0.0 |               0.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUrls_seq0_b67646ee7f8a2844                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       0.313 |    0.313 |      1 |        313,423 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_b952b9b920a911cc                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       0.225 |    0.225 |      1 |        225,630 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_ba7fe1c180abade8                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       0.890 |    0.890 |      1 |        888,687 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_dab62606bea3fc0c                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       0.463 |    0.463 |      1 |        463,372 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_df96ae0371eee3ab                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       0.300 |    0.300 |      1 |        300,383 |             0.0 |              36.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUrls_seq0_f224d32df00d9b59                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       0.412 |    0.412 |      1 |        412,471 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_f2406f7d6719dbf1                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       0.681 |    0.681 |      1 |        681,817 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUrls_seq0_f2d1ba1a8a51dafe                  | swarm-node-2         | socialnetwork-url-shorten-service-1(276089)   |       0.806 |    0.806 |      1 |        806,339 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUserMentions_seq0_085108978cf40248          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.296 |    0.296 |      1 |        294,742 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUserMentions_seq0_0ae69f8c781f5923          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.270 |    0.270 |      1 |        269,601 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUserMentions_seq0_0d69728d15d81088          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.244 |    0.244 |      1 |        243,712 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUserMentions_seq0_3f76eb5af3c5d987          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.188 |    0.188 |      1 |        188,452 |           132.0 |              48.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUserMentions_seq0_4225738ae2159c92          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.309 |    0.309 |      1 |        308,398 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUserMentions_seq0_4634e4b40e4a10ce          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.249 |    0.249 |      1 |        249,350 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUserMentions_seq0_46ca752bc7a46c99          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.255 |    0.255 |      1 |        255,186 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUserMentions_seq0_4bf80de5fe6b2dc4          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.509 |    0.509 |      1 |        507,744 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUserMentions_seq0_5a7249653abc6520          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.271 |    0.271 |      1 |        271,400 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUserMentions_seq0_6b38650228ae21c5          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.426 |    0.426 |      1 |        426,262 |             0.0 |              36.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUserMentions_seq0_6ba286c918b56639          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.264 |    0.264 |      1 |        263,508 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUserMentions_seq0_6cce63b65a7e4f08          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.573 |    0.573 |      1 |        572,429 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUserMentions_seq0_97c45b3dfa425cd9          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.188 |    0.188 |      1 |        188,525 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUserMentions_seq0_9cb09bbe2104eb48          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.160 |    0.160 |      1 |        160,215 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUserMentions_seq0_a05063150e25c488          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.238 |    0.238 |      1 |        237,220 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUserMentions_seq0_a6e8c62d5cff245c          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       3.140 |    0.893 |      2 |        891,688 |             0.0 |               0.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUserMentions_seq0_afa8a7f7bb5978b9          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.179 |    0.179 |      1 |        179,527 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUserMentions_seq0_bf1da779989aa8dc          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.194 |    0.194 |      1 |        194,544 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUserMentions_seq0_cd0030f38aad60de          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.185 |    0.185 |      1 |        185,268 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUserMentions_seq0_d724f5f17791b1c0          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.165 |    0.165 |      1 |        164,670 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUserMentions_seq0_df29a40fb3cb0b85          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.664 |    0.664 |      1 |        664,048 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUserMentions_seq0_e1f0af987ba48c31          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.383 |    0.383 |      1 |        382,120 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUserMentions_seq0_e6c7600623aeabf5          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.237 |    0.237 |      1 |        236,771 |           132.0 |              48.0 |       0.0 |       0.0 |        0.0 |        0.0
+ComposeUserMentions_seq0_e8be0e7814b38965          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.180 |    0.180 |      1 |        180,197 |           132.0 |              48.0 |       0.0 |       0.1 |        0.0 |        0.0
+ComposeUserMentions_seq0_f451613854db0e4f          | swarm-node-3         | socialnetwork-user-mention-service-1(278537)  |       0.292 |    0.292 |      1 |        292,715 |             0.0 |              36.0 |       0.0 |       0.1 |        0.0 |        0.0
+GetFollowers_seq0_3a9852cb3f8ddc26                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |       5.956 |    2.167 |      5 |      2,167,403 |             0.0 |               4.0 |       0.3 |       0.2 |        0.2 |        0.0
+GetFollowers_seq0_3b143bb8197d1975                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |       6.286 |    2.486 |      6 |      2,487,069 |             0.0 |              88.0 |       0.6 |       0.7 |        0.2 |        0.0
+GetFollowers_seq0_42ac9f51c1e2d306                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |       2.822 |    1.318 |      4 |      1,318,361 |           132.0 |             100.0 |       0.2 |       0.2 |        0.0 |        0.0
+GetFollowers_seq0_4b467fb759393b97                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |       1.934 |    0.953 |      3 |        953,767 |           132.0 |              88.0 |       0.2 |       0.1 |        0.0 |        0.0
+GetFollowers_seq0_5ab8b43e3e5488e3                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |       1.752 |    0.787 |      3 |        787,680 |           132.0 |              80.0 |       0.2 |       0.1 |        0.0 |        0.0
+GetFollowers_seq0_5bc2b88b7e1f5a53                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |       1.454 |    0.683 |      3 |        683,663 |           132.0 |             100.0 |       0.2 |       0.1 |        0.0 |        0.0
+GetFollowers_seq0_62d1056aa0fce24c                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |       3.868 |    1.802 |      7 |      1,801,837 |           132.0 |              72.0 |       0.2 |       0.1 |        0.0 |        0.0
+GetFollowers_seq0_65714f3aefa6f6cb                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |       8.711 |    2.772 |      7 |      2,771,638 |           132.0 |              76.0 |       0.2 |       0.2 |        0.0 |        0.0
+GetFollowers_seq0_6578fa13cbb45b1c                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |       5.725 |    1.610 |      6 |      1,609,632 |           132.0 |             100.0 |       0.2 |       0.1 |        0.0 |        0.0
+GetFollowers_seq0_6efcc0ded3ee319e                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |      13.685 |    4.417 |     12 |      4,415,928 |           132.0 |              96.0 |       0.6 |       0.6 |        0.4 |        0.0
+GetFollowers_seq0_7313c94ddf155fc3                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |      11.669 |    3.294 |      7 |      3,291,515 |           132.0 |              88.0 |       0.3 |       0.3 |        0.2 |        0.0
+GetFollowers_seq0_7327ccfa55999e8e                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |       2.092 |    1.050 |      3 |      1,049,603 |             0.0 |              88.0 |       0.2 |       0.2 |        0.0 |        0.0
+GetFollowers_seq0_755f38fad05bf9fa                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |       3.741 |    1.041 |      7 |      1,040,843 |           132.0 |             100.0 |       0.2 |       0.2 |        0.0 |        0.0
+GetFollowers_seq0_9e87db20f9eb2770                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |       2.900 |    1.589 |      3 |      1,587,437 |           132.0 |              72.0 |       0.2 |       0.2 |        0.0 |        0.0
+GetFollowers_seq0_a3c46435d616148b                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |       5.212 |    2.052 |      3 |      2,052,913 |           132.0 |              72.0 |       0.2 |       0.2 |        0.0 |        0.0
+GetFollowers_seq0_aad5c11064177815                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |       7.842 |    3.067 |      8 |      3,067,474 |           132.0 |              80.0 |       0.3 |       0.3 |        0.2 |        0.0
+GetFollowers_seq0_aef782e43f98960b                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |       5.509 |    1.308 |      4 |      1,306,926 |           132.0 |              76.0 |       0.2 |       0.2 |        0.0 |        0.0
+GetFollowers_seq0_c25c1783ea417632                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |       1.901 |    1.071 |      3 |      1,071,679 |           132.0 |              72.0 |       0.2 |       0.1 |        0.0 |        0.0
+GetFollowers_seq0_c30e622fbda159dc                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |       5.544 |    2.454 |      6 |      2,455,349 |           132.0 |             100.0 |       0.6 |       0.7 |        0.2 |        0.0
+GetFollowers_seq0_c753bd9ff9cc1543                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |      10.356 |    3.109 |     10 |      3,109,966 |             0.0 |              88.0 |       0.6 |       0.5 |        0.2 |        0.0
+GetFollowers_seq0_cc3dd26869e4bbcb                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |      10.093 |    4.752 |      9 |      4,752,486 |           132.0 |             100.0 |       0.6 |       0.7 |        0.4 |        0.0
+GetFollowers_seq0_d662d91af97d78e6                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |       1.708 |    0.981 |      4 |        981,118 |           132.0 |              76.0 |       0.2 |       0.1 |        0.0 |        0.0
+GetFollowers_seq0_db519addb42c8ddc                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |       2.678 |    1.504 |      6 |      1,505,036 |           132.0 |              72.0 |       0.2 |       0.2 |        0.0 |        0.0
+GetFollowers_seq0_fa0966984cd85e7d                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |       5.052 |    1.786 |      6 |      1,786,010 |           132.0 |              72.0 |       0.2 |       0.2 |        0.0 |        0.0
+GetFollowers_seq0_fefbe196714b93cb                 | swarm-node-4         | socialnetwork-social-graph-service-1(269126)  |       2.056 |    1.184 |      3 |      1,184,026 |           132.0 |              76.0 |       0.2 |       0.1 |        0.0 |        0.0
+StorePost_seq0_02a102fadc74976c                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       1.878 |    1.232 |      2 |      1,230,962 |           132.0 |              64.0 |       0.4 |       0.3 |        0.0 |        0.0
+StorePost_seq0_12af66c2a161e929                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       1.520 |    0.689 |      2 |        689,063 |           132.0 |             100.0 |       0.4 |       0.3 |        0.0 |        0.0
+StorePost_seq0_12e455224cddccf2                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       1.040 |    0.497 |      2 |        496,630 |           132.0 |             100.0 |       0.4 |       0.3 |        0.0 |        0.0
+StorePost_seq0_20ce221ae70fc394                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       1.343 |    0.678 |      2 |        678,576 |           132.0 |              64.0 |       0.4 |       0.3 |        0.0 |        0.0
+StorePost_seq0_24e0e2042d46fde2                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       1.828 |    1.016 |      2 |      1,015,751 |           132.0 |              64.0 |       0.4 |       0.3 |        0.0 |        0.0
+StorePost_seq0_28e3d552dfb85334                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       0.972 |    0.621 |      2 |        620,883 |             0.0 |              76.0 |       0.4 |       0.3 |        0.0 |        0.0
+StorePost_seq0_3116cbcd81a0ff22                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       0.894 |    0.472 |      2 |        472,638 |             0.0 |              76.0 |       0.4 |       0.0 |        0.0 |        0.0
+StorePost_seq0_35a2650b65538aad                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       4.492 |    1.549 |      4 |      1,549,215 |             0.0 |              76.0 |       0.7 |       0.7 |        0.2 |        0.0
+StorePost_seq0_379a84f5fe3648a9                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       1.194 |    0.622 |      2 |        622,646 |             0.0 |              76.0 |       0.4 |       0.3 |        0.0 |        0.0
+StorePost_seq0_5c608c1899c034a6                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       1.197 |    0.582 |      2 |        581,996 |           132.0 |             100.0 |       0.4 |       0.0 |        0.0 |        0.0
+StorePost_seq0_5fe2cbed190806eb                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       1.133 |    0.524 |      2 |        524,709 |             0.0 |              76.0 |       0.4 |       0.3 |        0.0 |        0.0
+StorePost_seq0_6490b2c4c623a2ef                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       1.458 |    1.080 |      2 |      1,080,590 |             0.0 |              76.0 |       0.4 |       0.3 |        0.0 |        0.0
+StorePost_seq0_694d4b584a6f7e9e                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       5.065 |    2.365 |      4 |      2,364,746 |           132.0 |             100.0 |       0.7 |       0.7 |        0.2 |        0.0
+StorePost_seq0_6bca41f3af17e10d                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       1.551 |    0.792 |      2 |        791,864 |           132.0 |              64.0 |       0.4 |       0.3 |        0.0 |        0.0
+StorePost_seq0_7a0466ed6f15fecf                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       1.674 |    0.814 |      2 |        814,379 |           132.0 |              64.0 |       0.4 |       0.3 |        0.0 |        0.0
+StorePost_seq0_8d82aa35be26a3a8                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       1.336 |    0.561 |      3 |        560,900 |           132.0 |              64.0 |       0.4 |       0.3 |        0.0 |        0.0
+StorePost_seq0_8d8951ab3aebf064                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       1.362 |    1.002 |      2 |      1,000,993 |           132.0 |              64.0 |       0.4 |       0.3 |        0.0 |        0.0
+StorePost_seq0_8d8d14e6db6d0682                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       1.533 |    1.102 |      2 |      1,102,580 |             0.0 |              76.0 |       0.4 |       0.3 |        0.0 |        0.0
+StorePost_seq0_b9397fdd020d870d                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       1.547 |    0.923 |      2 |        924,551 |           132.0 |              64.0 |       0.4 |       0.0 |        0.0 |        0.0
+StorePost_seq0_bbc989ff5588b7a0                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       2.884 |    1.142 |      3 |      1,141,475 |             0.0 |               0.0 |       0.4 |       0.0 |        0.0 |        0.0
+StorePost_seq0_d14c64ae7b66e924                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       1.516 |    0.687 |      2 |        686,538 |           132.0 |              64.0 |       0.4 |       0.3 |        0.0 |        0.0
+StorePost_seq0_d2850d0e3a8ef951                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       2.449 |    1.397 |      2 |      1,397,954 |           132.0 |             100.0 |       0.4 |       0.3 |        0.0 |        0.0
+StorePost_seq0_d40e9e7d9a7567ff                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       1.152 |    0.709 |      2 |        709,554 |           132.0 |              64.0 |       0.4 |       0.0 |        0.0 |        0.0
+StorePost_seq0_eab215a6d6a14ae6                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       1.450 |    0.782 |      3 |        780,646 |             0.0 |              76.0 |       0.4 |       0.3 |        0.0 |        0.0
+StorePost_seq0_f7a1c7d2667a18ca                    | swarm-node-4         | socialnetwork-post-storage-service-1(269233)  |       1.201 |    0.530 |      2 |        529,702 |           132.0 |             100.0 |       0.4 |       0.3 |        0.0 |        0.0
+WriteHomeTimeline_seq0_05e8e0862eda2e4f            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |       6.010 |    0.396 |      2 |        395,913 |           132.0 |              64.0 |       0.2 |       0.0 |        0.0 |        0.0
+WriteHomeTimeline_seq0_1b82d5430d925af6            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |      14.025 |    2.464 |      4 |      2,464,121 |           132.0 |              64.0 |       0.2 |       0.3 |        0.2 |        0.0
+WriteHomeTimeline_seq0_1de35f6095a7f776            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |       4.149 |    0.434 |      2 |        433,799 |             0.0 |              48.0 |       0.2 |       0.2 |        0.0 |        0.0
+WriteHomeTimeline_seq0_28a2b9f66f869eb0            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |      10.829 |    2.897 |      4 |      2,896,732 |             0.0 |              48.0 |       0.2 |       0.3 |        0.2 |        0.0
+WriteHomeTimeline_seq0_30ccbc3cc12fb968            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |       4.891 |    0.537 |      2 |        537,345 |           132.0 |              64.0 |       0.2 |       0.0 |        0.0 |        0.0
+WriteHomeTimeline_seq0_474074014ceba583            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |       3.859 |    0.639 |      2 |        637,913 |           132.0 |              48.0 |       0.2 |       0.0 |        0.0 |        0.0
+WriteHomeTimeline_seq0_6799ab9581277eeb            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |      15.008 |    4.118 |      7 |      4,125,567 |           132.0 |              64.0 |       0.2 |       0.3 |        0.2 |        0.0
+WriteHomeTimeline_seq0_715c7ae956bd709d            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |       7.847 |    2.353 |      5 |      2,352,751 |           132.0 |              64.0 |       0.2 |       0.3 |        0.2 |        0.0
+WriteHomeTimeline_seq0_84dcf33198999ac2            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |       2.739 |    0.600 |      2 |        600,654 |           132.0 |              68.0 |       0.2 |       0.0 |        0.0 |        0.0
+WriteHomeTimeline_seq0_8c5cd86026d9ef09            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |       8.822 |    1.354 |      4 |      1,355,082 |           132.0 |              68.0 |       0.2 |       0.3 |        0.2 |        0.0
+WriteHomeTimeline_seq0_8ebad94334144648            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |       2.792 |    0.492 |      2 |        493,020 |           132.0 |              64.0 |       0.2 |       0.0 |        0.0 |        0.0
+WriteHomeTimeline_seq0_94dd95560a8655f9            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |       7.264 |    1.224 |      2 |      1,222,591 |           132.0 |              48.0 |       0.2 |       0.0 |        0.0 |        0.0
+WriteHomeTimeline_seq0_a9c9b2502fb10adf            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |      16.178 |    3.194 |      4 |      3,193,041 |           132.0 |              68.0 |       0.2 |       0.3 |        0.2 |        0.0
+WriteHomeTimeline_seq0_ab46909599108f87            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |       2.836 |    0.507 |      2 |        507,988 |           132.0 |              64.0 |       0.2 |       0.0 |        0.0 |        0.0
+WriteHomeTimeline_seq0_b3ddf6de0f6defdd            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |      14.124 |    2.986 |      5 |      2,983,349 |           132.0 |              64.0 |       0.2 |       0.3 |        0.2 |        0.0
+WriteHomeTimeline_seq0_b4d4d8da226a247b            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |       3.046 |    0.410 |      2 |        409,914 |             0.0 |              48.0 |       0.2 |       0.0 |        0.0 |        0.0
+WriteHomeTimeline_seq0_c04db05b0bc86516            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |       2.613 |    0.472 |      2 |        471,668 |           132.0 |              64.0 |       0.2 |       0.0 |        0.0 |        0.0
+WriteHomeTimeline_seq0_ca51c13484d0cdc3            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |      18.767 |    2.494 |      6 |      2,493,924 |           132.0 |              64.0 |       0.2 |       0.3 |        0.2 |        0.0
+WriteHomeTimeline_seq0_cd2b68b81f34fc3b            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |      11.837 |    0.678 |      2 |        677,590 |           132.0 |              48.0 |       0.2 |       0.0 |        0.0 |        0.0
+WriteHomeTimeline_seq0_d5f5da56b8a49eea            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |      12.682 |    5.288 |      8 |      5,288,127 |             0.0 |               4.0 |       0.2 |       0.1 |        0.2 |        0.0
+WriteHomeTimeline_seq0_dce7b49764c6b5ab            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |      14.217 |    2.193 |      4 |      2,191,836 |           132.0 |              64.0 |       0.2 |       0.3 |        0.2 |        0.0
+WriteHomeTimeline_seq0_edb7ac268f9a6d74            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |      31.126 |   10.219 |      7 |     10,218,980 |           132.0 |              68.0 |       0.2 |       0.1 |        0.2 |        0.0
+WriteHomeTimeline_seq0_f4f4250be3be8ada            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |       5.024 |    0.667 |      2 |        666,106 |           132.0 |              64.0 |       0.2 |       0.2 |        0.0 |        0.0
+WriteHomeTimeline_seq0_f9ebdad37b4be60a            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |       2.454 |    0.552 |      2 |        552,581 |           132.0 |              64.0 |       0.2 |       0.0 |        0.0 |        0.0
+WriteHomeTimeline_seq0_fda0688afa85d70c            | swarm-node-5         | socialnetwork-home-timeline-service-1(268115) |       7.841 |    2.642 |      3 |      2,643,009 |           132.0 |              48.0 |       0.2 |       0.2 |        0.0 |        0.0
+WriteUserTimeline_seq0_00349765e60bd511            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |       2.253 |    0.688 |      3 |        688,608 |           132.0 |             100.0 |       0.4 |       0.2 |        0.0 |        0.0
+WriteUserTimeline_seq0_055fab040ba4ae42            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |       4.157 |    1.449 |      5 |      1,438,403 |           132.0 |              72.0 |       0.4 |       0.4 |        0.0 |        0.0
+WriteUserTimeline_seq0_091b1913f8dd9e96            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |       3.307 |    1.329 |      3 |      1,328,240 |           132.0 |             100.0 |       0.4 |       0.4 |        0.0 |        0.0
+WriteUserTimeline_seq0_2a1170ddf51284e4            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |       2.914 |    1.110 |      3 |      1,109,786 |           132.0 |             100.0 |       0.4 |       0.4 |        0.0 |        0.0
+WriteUserTimeline_seq0_3696ece0dee6fff1            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |       2.454 |    1.276 |      4 |      1,275,782 |           132.0 |              76.0 |       0.4 |       0.4 |        0.0 |        0.0
+WriteUserTimeline_seq0_4d0a8ff058364c5a            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |       6.309 |    3.550 |      4 |      3,550,961 |             0.0 |              64.0 |       0.4 |       0.4 |        0.2 |        0.0
+WriteUserTimeline_seq0_5bb174e97fbcd200            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |       2.844 |    1.115 |      3 |      1,114,619 |           132.0 |             100.0 |       0.4 |       0.4 |        0.0 |        0.0
+WriteUserTimeline_seq0_6e740257f42d2182            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |       1.605 |    0.808 |      3 |        808,313 |           132.0 |             100.0 |       0.4 |       0.2 |        0.0 |        0.0
+WriteUserTimeline_seq0_7205630bafcc10fa            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |       3.302 |    2.100 |      5 |      2,098,833 |           132.0 |              72.0 |       0.4 |       0.4 |        0.0 |        0.0
+WriteUserTimeline_seq0_7a6d547a1d317c14            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |       1.768 |    0.704 |      3 |        704,490 |             0.0 |              64.0 |       0.4 |       0.2 |        0.0 |        0.0
+WriteUserTimeline_seq0_8385e0dbb22972f6            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |       1.682 |    0.901 |      3 |        900,985 |           132.0 |              72.0 |       0.4 |       0.2 |        0.0 |        0.0
+WriteUserTimeline_seq0_9b22598f11cec1dd            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |      13.357 |    3.268 |      6 |      3,267,429 |           132.0 |             100.0 |       0.7 |       0.8 |        0.2 |        0.0
+WriteUserTimeline_seq0_b69fb8f67edd5333            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |       5.881 |    3.973 |      3 |      3,974,333 |           132.0 |              76.0 |       0.4 |       0.4 |        0.0 |        0.0
+WriteUserTimeline_seq0_b8479febc26111ad            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |       1.977 |    1.043 |      3 |      1,043,275 |           132.0 |             100.0 |       0.4 |       0.4 |        0.0 |        0.0
+WriteUserTimeline_seq0_b869f15f70d8a546            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |      12.289 |    4.783 |      5 |      4,781,802 |           132.0 |             100.0 |       0.7 |       0.8 |        0.2 |        0.0
+WriteUserTimeline_seq0_be7cfd845cffe7f8            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |       2.321 |    1.007 |      3 |      1,006,201 |           132.0 |             100.0 |       0.4 |       0.2 |        0.0 |        0.0
+WriteUserTimeline_seq0_bf55eb71882f8a5c            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |       4.139 |    1.382 |      3 |      1,382,724 |           132.0 |              76.0 |       0.4 |       0.4 |        0.0 |        0.0
+WriteUserTimeline_seq0_c9de514efd1d1eb2            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |       3.434 |    2.085 |      4 |      2,085,412 |           132.0 |              76.0 |       0.4 |       0.2 |        0.0 |        0.0
+WriteUserTimeline_seq0_d22b20931cc27aee            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |      13.148 |    3.544 |      6 |      3,542,874 |           132.0 |             100.0 |       0.7 |       0.8 |        0.2 |        0.0
+WriteUserTimeline_seq0_dbf39310050993c1            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |       9.187 |    3.832 |      9 |      3,842,683 |             0.0 |              32.0 |       0.4 |       0.3 |        0.2 |        0.0
+WriteUserTimeline_seq0_e237956a220c18c4            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |       3.363 |    1.363 |      3 |      1,363,411 |           132.0 |              76.0 |       0.4 |       0.2 |        0.0 |        0.0
+WriteUserTimeline_seq0_f5418933e645a36f            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |       1.915 |    0.862 |      3 |        862,435 |           132.0 |             100.0 |       0.4 |       0.2 |        0.0 |        0.0
+WriteUserTimeline_seq0_f7cf18f949692009            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |      10.858 |    4.731 |      8 |      4,731,545 |           132.0 |             100.0 |       0.7 |       0.8 |        0.2 |        0.0
+WriteUserTimeline_seq0_f9f673c6e467e798            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |       3.614 |    1.558 |      3 |      1,556,744 |           132.0 |              76.0 |       0.4 |       0.4 |        0.0 |        0.0
+WriteUserTimeline_seq0_fa7de4be4e4dafa2            | swarm-node-5         | socialnetwork-user-timeline-service-1(267973) |       1.815 |    0.754 |      3 |        754,339 |             0.0 |              64.0 |       0.4 |       0.4 |        0.0 |        0.0
+
+
+
+
+
+
+
+ACCUMULATED RESOURCE SUMMARY (ROOT TRACES)
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Request-ID                                         | Machine              | Service                                       | Latency(ms) |  CPU(ms) | Bursts |         Cycles | Virtual Mem(KB) | Peak Physical(KB) |  Send(KB) |  Recv(KB) | DiskRd(KB) | DiskWr(KB)
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ComposePost_seq0_05adee7c6572bd5a                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10099.186 |   59.158 |    107 |     59,164,304 |         34632.0 |             988.0 |       4.9 |       4.3 |        2.2 |        0.0
+ComposePost_seq0_07776fef190d3f18                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10026.717 |   25.831 |     51 |     25,837,200 |         17448.0 |             772.0 |       3.4 |       2.5 |        0.2 |        0.0
+ComposePost_seq0_0dbb26a151ff5c0a                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10075.296 |   40.636 |     79 |     40,635,934 |         17580.0 |             856.0 |       4.0 |       3.3 |        1.3 |        0.0
+ComposePost_seq0_19c0f9e3da424c99                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10051.332 |   24.574 |     53 |     24,575,241 |         41904.0 |             652.0 |       2.9 |       2.2 |        0.2 |        0.0
+ComposePost_seq0_1afb2e8c24f18eea                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10034.279 |   22.442 |     57 |     22,445,130 |         34236.0 |             752.0 |       3.1 |       2.0 |        0.0 |        0.0
+ComposePost_seq0_440cbcd65fe224da                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10063.730 |   30.839 |     57 |     30,827,528 |          9516.0 |             748.0 |       3.1 |       2.6 |        0.2 |        0.0
+ComposePost_seq0_46fb9243592de1b2                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10082.556 |   46.826 |     73 |     46,831,465 |          8592.0 |             120.0 |       3.0 |       1.0 |        0.5 |        0.0
+ComposePost_seq0_4714653c23882b39                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10032.818 |   20.038 |     51 |     20,041,817 |         17580.0 |             680.0 |       3.0 |       2.2 |        0.0 |        0.0
+ComposePost_seq0_514c5681834dff29                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10062.243 |   26.733 |     71 |     26,722,143 |         25776.0 |             700.0 |       3.4 |       2.9 |        0.9 |        0.0
+ComposePost_seq0_6e00fcc32b534b82                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10065.134 |   32.891 |     72 |     32,898,301 |         17448.0 |             904.0 |       4.8 |       4.0 |        1.0 |        0.0
+ComposePost_seq0_76a56105be8dfa5d                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10092.047 |   43.160 |     87 |     43,157,010 |         33840.0 |             888.0 |       4.2 |       3.8 |        2.4 |        0.0
+ComposePost_seq0_7c3ac825d9e96503                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10054.457 |   18.716 |     62 |     18,724,301 |          1056.0 |             632.0 |       2.9 |       2.4 |        0.2 |        0.0
+ComposePost_seq0_83363cfe46a8f4e5                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10049.713 |   33.390 |     57 |     33,393,599 |           924.0 |             728.0 |       3.2 |       2.6 |        0.7 |        0.0
+ComposePost_seq0_89eccf2bd5414947                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10087.728 |   55.024 |     74 |     55,097,329 |          1320.0 |             892.0 |       4.1 |       3.7 |        1.1 |        0.0
+ComposePost_seq0_957a79828f780e94                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10043.150 |   16.402 |     48 |     16,396,733 |         50100.0 |             664.0 |       2.8 |       0.9 |        0.0 |        0.0
+ComposePost_seq0_ac8ac8fe7a676b17                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10058.317 |   33.681 |     58 |     33,681,923 |         25512.0 |             640.0 |       3.0 |       2.6 |        0.9 |        0.0
+ComposePost_seq0_b52edc8bdf591753                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10033.295 |   20.186 |     54 |     20,183,861 |         25644.0 |             748.0 |       2.9 |       1.9 |        0.2 |        0.0
+ComposePost_seq0_c238c073d2657a02                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10081.063 |   45.457 |     84 |     45,461,253 |         17976.0 |             928.0 |       4.6 |       4.2 |        1.5 |        0.0
+ComposePost_seq0_cfcfdbb3757bc1a8                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10042.059 |   27.320 |     45 |     27,324,428 |         41772.0 |             692.0 |       2.8 |       0.8 |        0.0 |        0.0
+ComposePost_seq0_d0cab3ec4d7b21a7                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10037.382 |   14.592 |     39 |     14,593,471 |         17316.0 |             660.0 |       2.8 |       0.8 |        0.0 |        0.0
+ComposePost_seq0_d2b3a7980ca8d8ef                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10019.021 |   17.008 |     48 |     17,008,017 |         17580.0 |             700.0 |       3.1 |       1.7 |        0.0 |        0.0
+ComposePost_seq0_db26d6454d55aca3                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10040.373 |   32.793 |     64 |     32,794,923 |          9648.0 |             768.0 |       3.1 |       2.5 |        0.2 |        0.0
+ComposePost_seq0_e02b08406abfefef                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10049.914 |   34.994 |     67 |     34,994,454 |          9252.0 |             708.0 |       3.2 |       2.5 |        0.4 |        0.0
+ComposePost_seq0_e8d40953c5b84b7a                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10044.513 |   29.059 |     59 |     29,063,449 |          1056.0 |             664.0 |       2.9 |       2.1 |        0.2 |        0.0
+ComposePost_seq0_f450cb4138c8821b                  | swarm-node-2         | socialnetwork-compose-post-service-1(276239)  |   10100.991 |   47.602 |     79 |     47,606,227 |         41904.0 |             788.0 |       4.1 |       3.3 |        1.3 |        0.0

@@ -1,0 +1,23 @@
+version: '3.9'
+services:
+
+  user-mongodb:
+    image: mongo:4.4.6
+    hostname: user-mongodb
+    restart: always
+    command: mongod --nojournal --quiet --config /social-network-microservices/config/mongod.conf
+    volumes:
+    - ../../DSB/socialNetwork/config:/social-network-microservices/config
+
+  user-mention-service:
+    image: deathstarbench/social-network-microservices:latest
+    hostname: user-mention-service
+    restart: always
+    entrypoint: UserMentionService
+    volumes:
+    - ../../DSB/socialNetwork/config:/social-network-microservices/config
+
+networks:
+  default:
+    external: true
+    name: social-network-overlay

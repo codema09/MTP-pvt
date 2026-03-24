@@ -128,6 +128,7 @@ struct mem_event_t {
     u64 size_bytes;
     u64 pfn;
     u64 current_total_bytes;
+    char request_id[MAX_REQUEST_ID_LEN];
 };
 
 struct exit_event_t {

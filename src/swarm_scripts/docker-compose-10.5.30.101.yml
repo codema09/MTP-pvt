@@ -1,0 +1,23 @@
+version: '3.9'
+services:
+
+  social-graph-service:
+    image: deathstarbench/social-network-microservices:latest
+    hostname: social-graph-service
+    restart: always
+    entrypoint: SocialGraphService
+    volumes:
+    - ../../DSB/socialNetwork/config:/social-network-microservices/config
+
+  social-graph-mongodb:
+    image: mongo:4.4.6
+    hostname: social-graph-mongodb
+    restart: always
+    command: mongod --nojournal --quiet --config /social-network-microservices/config/mongod.conf
+    volumes:
+    - ../../DSB/socialNetwork/config:/social-network-microservices/config
+
+networks:
+  default:
+    external: true
+    name: social-network-overlay

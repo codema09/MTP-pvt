@@ -1,0 +1,21 @@
+version: '3.9'
+services:
+
+  media-memcached:
+    image: memcached
+    hostname: media-memcached
+    restart: always
+    command: ["-m", "16384", "-t", "8", "-I", "32m", "-c", "4096"]
+
+  media-mongodb:
+    image: mongo:4.4.6
+    hostname: media-mongodb
+    restart: always
+    command: mongod --nojournal --quiet --config /social-network-microservices/config/mongod.conf
+    volumes:
+    - ../../DSB/socialNetwork/config:/social-network-microservices/config
+
+networks:
+  default:
+    external: true
+    name: social-network-overlay

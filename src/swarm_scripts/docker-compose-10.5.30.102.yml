@@ -1,0 +1,25 @@
+version: '3.9'
+services:
+
+  social-graph-redis:
+    image: redis
+    hostname: social-graph-redis
+    restart: always
+    command: redis-server /social-network-microservices/config/redis.conf
+    volumes:
+    - ../../DSB/socialNetwork/config:/social-network-microservices/config
+
+  post-storage-service:
+    image: deathstarbench/social-network-microservices:latest
+    hostname: post-storage-service
+    ports:
+    - "10002:9090"
+    restart: always
+    entrypoint: PostStorageService
+    volumes:
+    - ../../DSB/socialNetwork/config:/social-network-microservices/config
+
+networks:
+  default:
+    external: true
+    name: social-network-overlay

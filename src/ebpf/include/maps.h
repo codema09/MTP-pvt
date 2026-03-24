@@ -18,6 +18,7 @@ BPF_HASH(tid_mmap_bytes, u32, u64);
 BPF_HASH(tid_mprotect_bytes, u32, u64);
 BPF_HASH(pfn_owner, u64, u32);
 BPF_HASH(tid_curr_phys, u32, u64);
+BPF_HASH(pfn_to_request_id, u64, struct request_id_key_t);
 
 // User History
 BPF_HASH(user_request_history, struct username_key_t, struct user_history_t);

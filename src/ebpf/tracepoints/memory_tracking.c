@@ -81,16 +81,6 @@ TRACEPOINT_PROBE(kmem, mm_page_alloc) {
     }
     tid_curr_phys.update(&tid, &cur_bytes);
 
-    struct request_id_key_t *req_id_key = tid_to_request_id.lookup(&tid);
-    if (req_id_key != NULL) {
-        struct resource_usage_t *usage = request_resources.lookup(req_id_key);
-        if (usage != NULL) {
-            if (cur_bytes > usage->peak_physical_bytes) {
-                usage->peak_physical_bytes = cur_bytes;
-            }
-        }
-    }
-
     struct mem_event_t ev = {};
     ev.timestamp_ns = bpf_ktime_get_ns();
     ev.tid = tid;
@@ -99,6 +89,21 @@ TRACEPOINT_PROBE(kmem, mm_page_alloc) {
     ev.size_bytes = size;
     ev.pfn = pfn;
     ev.current_total_bytes = cur_bytes;
+
+    struct request_id_key_t *req_id_key = tid_to_request_id.lookup(&tid);
+    if (req_id_key != NULL) {
+        struct resource_usage_t *usage = request_resources.lookup(req_id_key);
+        if (usage != NULL) {
+            if (cur_bytes > usage->peak_physical_bytes) {
+                usage->peak_physical_bytes = cur_bytes;
+            }
+        }
+        pfn_to_request_id.update(&pfn, req_id_key);
+        bpf_probe_read_kernel_str(&ev.request_id, sizeof(ev.request_id), req_id_key->id);
+    } else {
+        ev.request_id[0] = '-';
+    }
+
     mem_events.perf_submit(args, &ev, sizeof(ev));
 
     return 0;
@@ -129,6 +134,15 @@ TRACEPOINT_PROBE(kmem, mm_page_free) {
     ev.size_bytes = size;
     ev.pfn = pfn;
     ev.current_total_bytes = cur_bytes;
+
+    struct request_id_key_t *req_id_key = pfn_to_request_id.lookup(&pfn);
+    if (req_id_key != NULL) {
+        bpf_probe_read_kernel_str(&ev.request_id, sizeof(ev.request_id), req_id_key->id);
+        pfn_to_request_id.delete(&pfn);
+    } else {
+        ev.request_id[0] = '-';
+    }
+
     mem_events.perf_submit(args, &ev, sizeof(ev));
 
     pfn_owner.delete(&pfn);

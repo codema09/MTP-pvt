@@ -109,8 +109,8 @@ class IntegratedSnifferFull:
 
         # Prepare Log File
         self.log_file = open(LOG_FILENAME, "w")
-        self.log_file.write(f"TIMESTAMP             | TID   | EVENT | SIZE (KB) | CURRENT TID RSS (KB) | PFN\n")
-        self.log_file.write("-" * 90 + "\n")
+        self.log_file.write(f"TIMESTAMP             | TID   | EVENT | SIZE (KB) | CURRENT TID RSS (KB) | PFN | Request-ID\n")
+        self.log_file.write("-" * 130 + "\n")
 
     def _load_service_mapping(self):
         try:
@@ -696,11 +696,16 @@ class IntegratedSnifferFull:
 
     def handle_mem_event(self, cpu, data, size):
         ev = self.bpf["mem_events"].event(data)
+        
+        req_id = ev.request_id.decode('utf-8', 'ignore').rstrip('\x00')
+        if not req_id or req_id == "":
+            req_id = "-"
+
         ts = datetime.fromtimestamp(ev.timestamp_ns / 1e9).strftime('%H:%M:%S.%f')
         etype = "ALLOC" if ev.type == 1 else "FREE "
         size_kb = ev.size_bytes / 1024
         total_kb = ev.current_total_bytes / 1024
-        log_line = f"{ts} | {ev.tid:<5} | {etype} | {size_kb:>9.2f} | {total_kb:>20.2f} | {ev.pfn}\n"
+        log_line = f"{ts} | {ev.tid:<5} | {etype} | {size_kb:>9.2f} | {total_kb:>20.2f} | {ev.pfn} | {req_id}\n"
         self.log_file.write(log_line)
         self.log_file.flush()
 

@@ -1,0 +1,31 @@
+version: '3.9'
+services:
+
+  nginx-thrift:
+    image: yg397/openresty-thrift:xenial
+    hostname: nginx-thrift
+    ports:
+    - "8080:8080"
+    restart: always
+    volumes:
+    - ../../DSB/socialNetwork/nginx-web-server/lua-scripts:/usr/local/openresty/nginx/lua-scripts
+    - ../../DSB/socialNetwork/nginx-web-server/pages:/usr/local/openresty/nginx/pages
+    - ../../DSB/socialNetwork/nginx-web-server/conf/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+    - ../../DSB/socialNetwork/nginx-web-server/jaeger-config.json:/usr/local/openresty/nginx/jaeger-config.json
+    - ../../DSB/socialNetwork/gen-lua:/gen-lua
+    - ../../DSB/socialNetwork/docker/openresty-thrift/lua-thrift:/usr/local/openresty/lualib/thrift
+
+  media-frontend:
+    image: yg397/media-frontend:xenial
+    hostname: media-frontend
+    ports:
+    - "8081:8080"
+    restart: always
+    volumes:
+    - ../../DSB/socialNetwork/media-frontend/lua-scripts:/usr/local/openresty/nginx/lua-scripts
+    - ../../DSB/socialNetwork/media-frontend/conf/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+
+networks:
+  default:
+    external: true
+    name: social-network-overlay

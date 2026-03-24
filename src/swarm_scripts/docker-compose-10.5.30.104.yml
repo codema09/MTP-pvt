@@ -1,0 +1,23 @@
+version: '3.9'
+services:
+
+  home-timeline-service:
+    image: deathstarbench/social-network-microservices:latest
+    hostname: home-timeline-service
+    restart: always
+    entrypoint: HomeTimelineService
+    volumes:
+    - ../../DSB/socialNetwork/config:/social-network-microservices/config
+
+  home-timeline-redis:
+    image: redis
+    hostname: home-timeline-redis
+    restart: always
+    command: redis-server /social-network-microservices/config/redis.conf
+    volumes:
+    - ../../DSB/socialNetwork/config:/social-network-microservices/config
+
+networks:
+  default:
+    external: true
+    name: social-network-overlay
