@@ -2,6 +2,17 @@
 // common.h — Kernel includes, constants, and data structures
 // ═══════════════════════════════════════════════════════════════
 
+// Workaround for kernel 6.17+ headers that reference BPF features
+// not yet supported by the BCC/Clang toolchain.
+struct bpf_wq { u64 __opaque[2]; };
+
+#ifndef BPF_LOAD_ACQ
+#define BPF_LOAD_ACQ  0x100
+#endif
+#ifndef BPF_STORE_REL
+#define BPF_STORE_REL 0x110
+#endif
+
 #include <uapi/linux/ptrace.h>
 #include <net/sock.h>
 #include <net/inet_sock.h>

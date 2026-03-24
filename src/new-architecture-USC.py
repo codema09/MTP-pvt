@@ -893,7 +893,7 @@ class IntegratedSnifferFull:
 
         num_cpus = os.cpu_count() or 128
         bpf_source = load_bpf_program(num_cpus)
-        self.bpf = BPF(text=bpf_source, cflags=["-Wno-array-bounds"])
+        self.bpf = BPF(text=bpf_source, cflags=["-Wno-array-bounds", "-Wno-duplicate-decl-specifier"])
 
         # Populate the target_pids map so kernel filters on all registered PIDs
         pid_map = self.bpf.get_table("target_pids")
