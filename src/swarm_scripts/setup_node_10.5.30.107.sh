@@ -60,16 +60,19 @@ fi
 
 echo "Captured Host PIDs: $PIDS"
 
-echo "[4/4] Starting Sniffer in the background..."
+echo "[4/4] Starting Sniffer in a detached tmux session..."
 pkill -f new-architecture-USC.py || true
 
 # We must CD to src so that local imports and BPF includes work correctly
 cd ..
-sudo nohup python3 new-architecture-USC.py -p $PIDS > "sniffer_10.5.30.107.log" 2>&1 &
+tmux kill-session -t ebpf_sniffer 2>/dev/null || true
+tmux new-session -d -s ebpf_sniffer "sudo python3 new-architecture-USC.py -p $PIDS --log-handler http://10.105.18.100:5000/ingest 2>&1 | tee sniffer_10.5.30.107.log"
 
 echo "==========================================================="
 echo "✅ Setup Complete!"
 echo "Docker services are UP."
-echo "Sniffer is detached and logging to: src/sniffer_10.5.30.107.log"
-echo "Check \`tail -f src/sniffer_10.5.30.107.log\` for live memory profiling."
+echo "Sniffer is running safely in a foreground tmux session!"
+echo "To view the live output anytime, SSH into this server and type:"
+echo "    tmux attach -t ebpf_sniffer"
+echo "To detach again without stopping it, press Ctrl+B, then D."
 echo "==========================================================="
