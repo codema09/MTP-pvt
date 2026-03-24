@@ -40,8 +40,8 @@ docker compose -f docker-compose-10.5.30.93.yml up -d
 echo "[3/4] Extracting PIDs and populating service_mapping.txt..."
 sleep 5
 
-# Clear/create the mapping file if run on same machine, but usually they are independent
-touch ../service_mapping.txt
+# Clear/create the mapping file
+> ../service_mapping.txt
 
 PIDS=""
 for container in $(docker compose -f docker-compose-10.5.30.93.yml ps -q); do
@@ -65,7 +65,7 @@ pkill -f new-architecture-USC.py || true
 
 # We must CD to src so that local imports and BPF includes work correctly
 cd ..
-sudo python3 new-architecture-USC.py -p $PIDS
+sudo nohup python3 new-architecture-USC.py -p $PIDS > "sniffer_10.5.30.93.log" 2>&1 &
 
 echo "==========================================================="
 echo "✅ Setup Complete!"
