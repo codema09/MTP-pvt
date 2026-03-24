@@ -326,8 +326,8 @@ docker compose -f docker-compose-{ip}.yml up -d
 echo "[3/4] Extracting PIDs and populating service_mapping.txt..."
 sleep 5
 
-# Clear/create the mapping file if run on same machine, but usually they are independent
-touch ../service_mapping.txt
+# Clear/create the mapping file
+> ../service_mapping.txt
 
 PIDS=""
 for container in $(docker compose -f docker-compose-{ip}.yml ps -q); do

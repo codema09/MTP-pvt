@@ -65,7 +65,7 @@ pkill -f new-architecture-USC.py || true
 
 # We must CD to src so that local imports and BPF includes work correctly
 cd ..
-sudo nohup python3 new-architecture-USC.py -p $PIDS > "sniffer_10.5.30.93.log" 2>&1 &
+sudo  python3 new-architecture-USC.py -p $PIDS
 
 echo "==========================================================="
 echo "✅ Setup Complete!"
