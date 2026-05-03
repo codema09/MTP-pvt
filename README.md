@@ -1,6 +1,6 @@
 # Distributed eBPF Profiling Framework — 25-Node Deployment
 
-Zero-instrumentation compute flow attribution for the DeathStarBench Social Network across a 25-VM cluster. eBPF probes silently observe every Thrift RPC call, CPU burst, memory allocation, and network byte on each node without modifying any application binary.
+Zero-instrumentation compute flow attribution framework tested on the DeathStarBench Social Network across a 25-VM cluster. eBPF probes silently observe every Thrift RPC call, CPU burst, memory allocation, and network byte on each node without modifying any application binary.
 
 ---
 
@@ -116,13 +116,28 @@ The root span (`ComposePost`) shows ~10,100 ms wall-clock time — a Thrift conn
 
 ### Accumulated Resource Summary (Cluster-Wide Totals per Root Request)
 
+Each row is the recursive sum of every child span's resource figures collapsed into the root request — the total cluster-wide cost of one `ComposePost` call spanning all nine participating machines.
+
 ```
-Request-ID                          | Machine | Service                         | Latency(ms) | CPU(ms) | Bursts | Cycles
-------------------------------------|---------|----------------------------------|-------------|---------|--------|----------
-ComposePost_seq0_015d8f33dd4d9f89   | VB2     | compose-post-service-1(263562)  |  10114.620  |  15.451 |     58 | 15,451,001
-ComposePost_seq0_0d3c9439b6e1fd4b   | VB2     | compose-post-service-1(263562)  |  10160.775  |  15.711 |     78 | 15,709,865
-ComposePost_seq0_16f46d290782d0dc   | VB2     | compose-post-service-1(263562)  |  10141.104  |  13.119 |     64 | 13,114,889
-ComposePost_seq0_23a2060bdc17bbc2   | VB2     | compose-post-service-1(263562)  |  10159.387  |  19.533 |     73 | 19,538,387
+Request-ID                         | Machine | Latency(ms) | CPU(ms) | Bursts | Cycles     | VirtMem(KB) | PeakPhy(KB) | Send(KB) | Recv(KB) | DiskRd(KB) | DiskWr(KB)
+-----------------------------------|---------|-------------|---------|--------|------------|-------------|-------------|----------|----------|------------|----------
+ComposePost_seq0_015d8f33dd4d9f89  | VB2     |  10114.620  |  15.451 |     58 | 15,451,001 |    50,232.0 |       808.0 |      8.5 |      3.9 |        0.0 |        0.0
+ComposePost_seq0_0d3c9439b6e1fd4b  | VB2     |  10160.775  |  15.711 |     78 | 15,709,865 |    25,776.0 |       592.0 |      6.2 |      3.1 |        0.0 |        0.0
+ComposePost_seq0_16f46d290782d0dc  | VB2     |  10141.104  |  13.119 |     64 | 13,114,889 |    25,644.0 |       708.0 |      5.3 |      3.1 |        0.0 |        0.0
+ComposePost_seq0_23a2060bdc17bbc2  | VB2     |  10159.387  |  19.533 |     73 | 19,538,387 |    51,288.0 |       644.0 |      5.4 |      2.9 |        0.0 |        0.0
+ComposePost_seq0_8516e067d45f02d5  | VB2     |  10102.179  |  14.088 |    141 | 14,085,917 |    49,968.0 |       644.0 |      5.3 |      2.6 |        0.0 |        0.0
 ```
 
-Every request shows roughly **10,100 ms** of wall-clock latency against only **9–20 ms** of real CPU consumption across all nine participating machines. Over **99.8% of end-to-end time was spent waiting**, not computing — a result invisible to any tool that measures only wall-clock intervals. Variation in burst count across requests with similar CPU time (e.g. 50 bursts vs 78 bursts) reflects scheduler contention differences between request windows, not algorithmic cost differences.
+**What each column reveals:**
+
+- **Latency** — Wall-clock time from first byte received to thread exit on the root service, including all downstream blocking. All requests sit near the ~10,100 ms Thrift connection timeout, confirming the root service was blocked waiting on a downstream reply that never returned within the deadline.
+
+- **CPU / Bursts / Cycles** — Across all 9 machines, each request consumed only **9–20 ms** of real CPU time despite ~10,100 ms of elapsed time. Over **99.8% of end-to-end time was spent waiting**, not computing. Burst count variation at similar CPU levels (e.g. 58 vs 141 bursts for near-identical CPU) reflects scheduler contention differences between request windows, not algorithmic cost differences.
+
+- **Virtual Memory** — The mmap footprint of all threads involved, ranging from ~9 MB to ~58 MB per request. Multiplied by the 50-request concurrency level, this gives a direct lower bound on the memory capacity the cluster must sustain under load.
+
+- **Peak Physical** — The maximum simultaneously-resident physical DRAM across the span lifetime, measured at page-frame-number granularity. Consistently in the **572–892 KB** range — the true hardware footprint, orders of magnitude smaller than the virtual address space.
+
+- **Network Send / Recv** — Total bytes transmitted across all service-to-service Thrift calls for the request. Small values (3–22 KB sent, 1–7 KB received) confirm the workload is latency-bound, not bandwidth-bound.
+
+- **Disk Read / Write** — Zero throughout, confirming all persistence goes through in-memory Redis and MongoDB with no direct file I/O on the monitored Thrift service threads.
