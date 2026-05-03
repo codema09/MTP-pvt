@@ -21,6 +21,7 @@ import os
 import sys
 import argparse
 import signal
+import threading
 from datetime import datetime
 
 # ═══════════════════════════════════════════════════════════════
@@ -75,6 +76,8 @@ BPF_SOURCE_FILES = [
 def load_bpf_program(num_cpus):
     """Read all eBPF source files, concatenate, and substitute runtime values."""
     parts = []
+    # Patch for 6.17+ kernel bpf_wq struct evaluation bug
+    parts.append("struct bpf_wq { };\n")
     for relpath in BPF_SOURCE_FILES:
         filepath = os.path.join(EBPF_SRC_DIR, relpath)
         with open(filepath, "r") as f:
@@ -446,6 +449,9 @@ class IntegratedSnifferFull:
                 'dst_ip': self.ip_to_str(usage.dst_ip),
                 'dst_port': usage.dst_port,
                 'payload_req_id': usage.payload_req_id,
+                'last_response_time': datetime.fromtimestamp(
+                    (usage.last_send_ns + self._ktime_offset_ns) / 1e9
+                ).strftime('%Y-%m-%d %H:%M:%S.%f') if usage.last_send_ns > 0 else "N/A",
             }
             
             # Only add to list if not present (or update it)
@@ -469,6 +475,7 @@ class IntegratedSnifferFull:
                 print(f"{IND_CPU}↳ [CPU DETAILED] Bursts: {usage.cpu_burst_count} | Avg Duration: {avg_burst_ms:.3f} ms | Total CPU: {total_cpu_ms:.3f} ms")
                 print(f"{IND_CPU}               Avg Cycles: {avg_cycles:,.0f} | Total Cycles: {total_cycles:,.0f}")
                 print(f"{IND_CPU}               Avg Instructions: {avg_instructions:,.0f} | Total Instructions: {total_instructions:,.0f}")
+                print(f"{IND_CPU}↳ [TIMESTAMPS] Last Response Sent: {record.get('last_response_time', 'N/A')}")
                 dbg = self.tid_burst_debug.get(usage.tid)
                 # if dbg:
                 #     print(f"{IND_CPU}↳ [BURST TRACE] Kernel saw {dbg['count']} bursts for tid={usage.tid} | "
@@ -673,11 +680,15 @@ class IntegratedSnifferFull:
         src = f"{self.ip_to_str(ev.src_ip)}:{ev.src_port}"
         dst = f"{self.ip_to_str(ev.dst_ip)}:{ev.dst_port}"
         
-        req_val = ""
-        if ev.payload_req_id != 0:
-            req_val = f" | req_id_param: {ev.payload_req_id}"
-            
-        print(f"{C.CONN}{IND_CONN}⬡ [{ts}] NEW THRIFT CALL  {parent_request_id}  {src} → {dst} (Outgoing: {method}_seq{seq_id}{req_val}){C.RESET}")
+        if method == "DB_OP":
+            print(f"{C.CONN}{IND_CONN}⬡ [{ts}] NEW DB CALL      {parent_request_id}  {src} → {dst}{C.RESET}")
+            child_prefix = ""
+        else:
+            req_val = ""
+            if ev.payload_req_id != 0:
+                req_val = f" | req_id_param: {ev.payload_req_id}"
+            print(f"{C.CONN}{IND_CONN}⬡ [{ts}] NEW THRIFT CALL  {parent_request_id}  {src} → {dst} (Outgoing: {method}_seq{seq_id}{req_val}){C.RESET}")
+            child_prefix = f"{method}_seq{seq_id}_"
         
         self.recorded_connections.append({
             'request_id': parent_request_id,
@@ -686,7 +697,7 @@ class IntegratedSnifferFull:
             'dst_ip': self.ip_to_str(ev.dst_ip),
             'dst_port': ev.dst_port,
             'timestamp': ts,
-            'child_prefix': f"{method}_seq{seq_id}_",
+            'child_prefix': child_prefix,
             'payload_req_id': ev.payload_req_id
         })
 
@@ -833,9 +844,9 @@ class IntegratedSnifferFull:
         )
         try:
             with urllib.request.urlopen(req, timeout=10) as resp:
-                print(f"[LOG-HANDLER] Data sent successfully: {resp.status}")
+                print(f"[LOG-HANDLER] [{datetime.now().isoformat()}] Data sent successfully: {resp.status}")
         except Exception as e:
-            print(f"[LOG-HANDLER] Failed to send data: {e}")
+            print(f"[LOG-HANDLER] [{datetime.now().isoformat()}] Failed to send data: {e}")
             # Fallback: dump to local JSON file
             fallback = f"usc_dump_{int(time.time())}.json"
             with open(fallback, 'w') as f:
@@ -891,6 +902,11 @@ class IntegratedSnifferFull:
         print(f"Log File:    {os.path.abspath(LOG_FILENAME)}")
         print("Initializing BPF... (Please wait)")
 
+        # Start resource logging thread IMMEDIATELY to capture the rise in eBPF memory
+        self.logger_running = True
+        self.logger_thread = threading.Thread(target=self._resource_logger_loop, daemon=True)
+        self.logger_thread.start()
+
         num_cpus = os.cpu_count() or 128
         bpf_source = load_bpf_program(num_cpus)
         self.bpf = BPF(text=bpf_source, cflags=["-Wno-array-bounds", "-Wno-duplicate-decl-specifier"])
@@ -937,6 +953,7 @@ class IntegratedSnifferFull:
         self.bpf["cpu_burst_events"].open_perf_buffer(self.handle_cpu_burst_event, lost_cb=_no_lost)
         
         def _print_summary():
+            self.logger_running = False
             self._flush_unexited_at_exit()
             print("\n\n" + "="*238)
             print("FINAL SESSION SUMMARY".center(242))
@@ -952,6 +969,7 @@ class IntegratedSnifferFull:
             self.log_file.close()
 
         signal.signal(signal.SIGTERM, lambda *_: (_print_summary(), sys.exit(0)))
+        signal.signal(signal.SIGINT, lambda *_: (_print_summary(), sys.exit(0)))
 
         while True:
             try:
@@ -960,6 +978,92 @@ class IntegratedSnifferFull:
             except KeyboardInterrupt:
                 _print_summary()
                 break
+
+    def _resource_logger_loop(self):
+        """Sample eBPF memlock + Python CPU% every 10 ms and append to usage.txt."""
+        pid = os.getpid()
+        fdinfo_dir = f"/proc/{pid}/fdinfo"
+        interval = 0.10  # 100 ms
+        
+        try:
+            num_cpus = os.cpu_count() or 1
+        except Exception:
+            num_cpus = 1
+            
+        prev_sys_total = 0
+        prev_proc_total = 0
+
+        with open("usage.txt", "w", buffering=1) as f:
+            f.write(f"{'timestamp_ms':<18}\t{'ebpf_mem_kb':>12}\t{'cpu_pct':>10}\n")
+
+            while self.logger_running:
+                t0 = time.monotonic()
+
+                # ── eBPF memory: summation over maps (entry_count * element_size) ──
+                ebpf_kb = 0
+                if self.bpf is not None:
+                    total_bytes = 0
+                    EBPF_MAP_SIZES = {
+                        'target_pids': 8,
+                        'fd_to_conn': 20,
+                        'tid_to_fd': 12,
+                        'request_resources': 360,
+                        'tid_to_request_id': 68,
+                        'tid_to_thread_start': 12,
+                        'tid_to_overhead_ns': 12,
+                        'tid_mmap_bytes': 12,
+                        'tid_mprotect_bytes': 12,
+                        'pfn_owner': 12,
+                        'tid_curr_phys': 12,
+                        'pfn_to_request_id': 72,
+                        'user_request_history': 8944,
+                        'active_sock_op': 5,
+                        'cpu_burst_start_map': 28,
+                        'tid_cpu_pre_assign': 52,
+                        'tid_to_tgid': 8,
+                        'tcp_connect_args': 20,
+                        'ssl_read_args': 16,
+                        'ssl_read_ex_args': 24,
+                        'thrift_recv_args': 20,
+                    }
+                    for map_name, item_size in EBPF_MAP_SIZES.items():
+                        try:
+                            num_entries = len(self.bpf[map_name])
+                            total_bytes += item_size * num_entries
+                        except Exception:
+                            pass
+                    ebpf_kb = total_bytes / 1024.0
+
+                # ── CPU %: reading /proc/stat manually mapped over 10 ms ────────
+                try:
+                    with open(f"/proc/{pid}/stat", "r") as s_fd:
+                        stat = s_fd.read().split()
+                    proc_total = float(stat[13]) + float(stat[14])
+                    
+                    with open("/proc/stat", "r") as sys_fd:
+                        sys_stat = sys_fd.readline().split()
+                    sys_total = sum(float(x) for x in sys_stat[1:8])
+                    
+                    if prev_sys_total > 0 and sys_total > prev_sys_total:
+                        sys_delta = sys_total - prev_sys_total
+                        proc_delta = proc_total - prev_proc_total
+                        cpu_pct = 100.0 * num_cpus * (proc_delta / sys_delta)
+                    else:
+                        cpu_pct = 0.0
+                        
+                    prev_sys_total = sys_total
+                    prev_proc_total = proc_total
+                except Exception:
+                    cpu_pct = 0.0
+
+                ts_ms = time.time_ns() // 1_000_000
+                f.write(f"{ts_ms:<18}\t{ebpf_kb:>12}\t{cpu_pct:>10.2f}\n")
+
+                # Sleep for the remainder of the 10 ms window
+                elapsed = time.monotonic() - t0
+                remaining = interval - elapsed
+                if remaining > 0:
+                    time.sleep(remaining)
 
 if __name__ == "__main__":
     if os.geteuid() != 0:
@@ -975,4 +1079,7 @@ if __name__ == "__main__":
 
     sniffer = IntegratedSnifferFull(args.pid)
     sniffer.log_handler_url = args.log_handler or os.environ.get("LOG_HANDLER_URL")
+
+
+
     sniffer.run()

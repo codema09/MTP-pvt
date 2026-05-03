@@ -2,30 +2,30 @@ import re
 import graphviz
 
 data = """
-└── ComposePost_seq0_05adee7c6572bd5a  [10.0.1.10:9090] (10099.19ms) @swarm-node-2 | socialnetwork-compose-post-service-1(276239)
-    ├── ComposeUniqueId_seq0_0edb3c3f93e46fc8  [10.0.1.62:9090] (0.60ms) @swarm-node-3 | socialnetwork-unique-id-service-1(278313)
-    ├── ComposeText_seq0_7ec6cbcc15aad283  [10.0.1.7:9090] (13.73ms) @swarm-node-2 | socialnetwork-text-service-1(276188)
-    │   ├── ComposeUserMentions_seq0_6ba286c918b56639  [10.0.1.69:9090] (0.26ms) @swarm-node-3 | socialnetwork-user-mention-service-1(278537)
-    │   └── ComposeUrls_seq0_b67646ee7f8a2844  [10.0.1.254:9090] (0.31ms) @swarm-node-2 | socialnetwork-url-shorten-service-1(276089)
-    ├── WriteUserTimeline_seq0_091b1913f8dd9e96  [10.0.1.87:9090] (3.31ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
-    ├── WriteHomeTimeline_seq0_30ccbc3cc12fb968  [10.0.1.84:9090] (4.89ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
-    │   ├── GetFollowers_seq0_6578fa13cbb45b1c  [10.0.1.76:9090] (5.72ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
-    │   └── GetFollowers_seq0_62d1056aa0fce24c  [10.0.1.76:9090] (3.87ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
-    ├── ComposeMedia_seq0_56f8716c004503a5  [10.0.1.65:9090] (0.52ms) @swarm-node-3 | socialnetwork-media-service-1(278554)
-    ├── WriteUserTimeline_seq0_b869f15f70d8a546  [10.0.1.87:9090] (12.29ms) @swarm-node-5 | socialnetwork-user-timeline-service-1(267973)
-    ├── WriteHomeTimeline_seq0_6799ab9581277eeb  [10.0.1.84:9090] (15.01ms) @swarm-node-5 | socialnetwork-home-timeline-service-1(268115)
-    │   └── GetFollowers_seq0_cc3dd26869e4bbcb  [10.0.1.76:9090] (10.09ms) @swarm-node-4 | socialnetwork-social-graph-service-1(269126)
-    ├── StorePost_seq0_8d8951ab3aebf064  [10.0.1.79:9090] (1.36ms) @swarm-node-4 | socialnetwork-post-storage-service-1(269233)
-    └── ComposeCreatorWithUserId_seq0_c824ebbea410ae52  [10.0.1.64:9090] (0.29ms) @swarm-node-3 | socialnetwork-user-service-1(278394)
+└── ComposePost_seq0_fabdd7e4871eff23  [10.11.0.77:9090] (10070.65ms) @shrest-VB0 | socialnetwork_compose-post-service(61528)
+    ├── ComposeText_seq0_3e1368e078df1a56  [10.11.0.95:9090] (4.75ms) @shrest-VB6 | socialnetwork_text-service(31996)
+    │   ├── ComposeUrls_seq0_af59af19834f1d4c  [10.11.0.43:9090] (1.92ms) @shrest-VB12 | socialnetwork_url-shorten-service(12140)
+    │   │   └── ⛁ [Memcached] 10.11.0.10:11211 (3 calls)
+    │   └── ComposeUserMentions_seq0_b13fd0bac3c06cd7  [10.11.0.89:9090] (1.75ms) @shrest-VB7 | socialnetwork_user-mention-service(11647)
+    ├── ComposeCreatorWithUserId_seq0_73ba854fd241032a  [10.11.0.91:9090] (3.11ms) @shrest-VB9 | socialnetwork_user-service(23808)
+    ├── ComposeUniqueId_seq0_4743a2c5417df296  [10.11.0.65:9090] (4.07ms) @shrest-VB10 | socialnetwork_unique-id-service(13227)
+    ├── WriteUserTimeline_seq0_c7da759388bbd772  [10.11.0.30:9090] (8.91ms) @shrest-VB8 | socialnetwork_user-timeline-service(11738)
+    │   ├── ⛁ [Redis] 10.11.0.8:6379 (2 calls)
+    │   └── ⛁ [MongoDB] 10.11.0.12:27017
+    ├── WriteHomeTimeline_seq0_9f1fa50a318a25c3  [10.11.0.74:9090] (21.47ms) @shrest-VB8 | socialnetwork_home-timeline-service(11897)
+    │   └── GetFollowers_seq0_4e4e5a386649c765  [10.11.0.82:9090] (7.65ms) @shrest-VB12 | socialnetwork_social-graph-service(12496)
+    ├── StorePost_seq0_385f9c7cf08766bc  [10.11.0.97:9090] (4.84ms) @shrest-VB6 | socialnetwork_post-storage-service(32146)
+    └── ComposeMedia_seq0_883dcba0f61b73c3  [10.11.0.71:9090] (1.74ms) @shrest-VB14 | socialnetwork_media-service(12067)
+
 """
 
 def generate_dag(text_data, output_filename="request_dag"):
     # Initialize the Graphviz directed graph object
     dot = graphviz.Digraph(comment='Request Trace DAG')
-    dot.attr(rankdir='TB') # Top to Bottom hierarchy
-    dot.attr(dpi='300') # Increase resolution to fix pixelation
-    dot.attr(nodesep='0.03', ranksep='1.6') # More vertical space and narrower width
-    dot.attr('node', shape='box', style='rounded,filled', fillcolor='lightblue', fontname='Helvetica', fontsize='10')
+    dot.attr(rankdir='LR')
+    dot.attr('node', shape='box', style='rounded,filled', fontname='Helvetica', fillcolor='#f0f9ff', color='#005b96', penwidth='2')
+    dot.attr('edge', color='#555555', penwidth='1.5', arrowhead='vee')
+    dot.attr(nodesep='0.05', ranksep='2.0')
 
     stack = {}
     
@@ -33,6 +33,28 @@ def generate_dag(text_data, output_filename="request_dag"):
     lines = [line for line in text_data.split('\n') if line.strip()]
 
     for i, line in enumerate(lines):
+        # Try formatting as a backend leaf node first
+        backend_match = re.search(r'⛁\s+\[([^\]]+)\]\s+([^ ]+)(?:\s+\(([0-9]+)\s+calls\))?', line)
+        if backend_match:
+            category = backend_match.group(1)
+            ip_port = backend_match.group(2)
+            calls_val = backend_match.group(3)
+            
+            prefix = line[:backend_match.start()]
+            level = len(prefix) // 4 - 1
+            node_id = f"node_{i}"
+            
+            call_text = f" ({calls_val} calls)" if calls_val else ""
+            label = f"{category}{call_text}\n{ip_port}"
+            
+            # Use cylinder shape for databases
+            dot.node(node_id, label, shape='cylinder', fillcolor='#fff3e0', color='#e65100', style='filled')
+            
+            if level > 0:
+                parent_id = stack[level - 1]
+                dot.edge(parent_id, node_id, color="#e65100", style="dashed")
+            continue
+
         # Extract metadata using regex
         # Pattern captures: 1: Method name, 2: IP:Port, 3: Duration, 4: Swarm node, 5: Service Info
         match = re.search(r'([a-zA-Z_0-9]+)\s+\[([^\]]+)\]\s+\(([^)]+)\)\s+@([^\s]+)\s+\|\s+(.*)', line)
@@ -41,8 +63,7 @@ def generate_dag(text_data, output_filename="request_dag"):
             continue
             
         full_method_name = match.group(1)
-        # Keep the request-ID but drop the final hash (e.g. ComposePost_seq0)
-        method_name = "_".join(full_method_name.split('_')[:-1])
+        method_name = full_method_name.split('_')[0]
         
         ip_port = match.group(2)
         duration = match.group(3)
@@ -56,13 +77,14 @@ def generate_dag(text_data, output_filename="request_dag"):
         
         node_id = f"node_{i}"
         
-        # Design a multiline layout for the node box
-        label = f"<<B>{method_name}</B><BR/>" \
-                f"<FONT POINT-SIZE='9' COLOR='gray30'>{service}</FONT><BR/>" \
-                f"<FONT POINT-SIZE='9' COLOR='red'>{duration}</FONT> | " \
-                f"<FONT POINT-SIZE='9' COLOR='blue'>{swarm_node}</FONT>>"
+        label = f"{method_name}\n({duration})\n{swarm_node}\n{service}"
         
-        dot.node(node_id, label=label)
+        if "GetFollowers" in method_name:
+            dot.node(node_id, label, fillcolor="#e8f5e9", color="#2e7d32")
+        elif "ComposePost" in method_name:
+            dot.node(node_id, label, fillcolor="#ffebee", color="#c62828")
+        else:
+            dot.node(node_id, label)
         
         # Keep track of the nodes at current depth levels to figure out parent-child linkages
         stack[level] = node_id

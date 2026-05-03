@@ -4,7 +4,7 @@
 
 // Workaround for kernel 6.17+ headers that reference BPF features
 // not yet supported by the BCC/Clang toolchain.
-struct bpf_wq { u64 __opaque[2]; };
+// struct bpf_wq { u64 __opaque[2]; };
 
 #ifndef BPF_LOAD_ACQ
 #define BPF_LOAD_ACQ  0x100

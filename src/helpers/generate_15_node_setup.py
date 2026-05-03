@@ -1,5 +1,16 @@
 import os
 import stat
+import socket
+
+try:
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("10.5.30.93", 80))
+    MY_IP = s.getsockname()[0]
+    s.close()
+except Exception:
+    MY_IP = "10.5.30.1" # Fallback if unreachable
+
+LOG_HANDLER_URL = f"http://{MY_IP}:5000/ingest"
 
 SERVICES_DISTRIBUTION = [
     # Node 93 (Manager)
@@ -346,18 +357,21 @@ fi
 
 echo "Captured Host PIDs: $PIDS"
 
-echo "[4/4] Starting Sniffer in the background..."
+echo "[4/4] Starting Sniffer in a detached tmux session..."
 pkill -f new-architecture-USC.py || true
 
 # We must CD to src so that local imports and BPF includes work correctly
 cd ..
-sudo nohup python3 new-architecture-USC.py -p $PIDS > "sniffer_{ip}.log" 2>&1 &
+tmux kill-session -t ebpf_sniffer 2>/dev/null || true
+tmux new-session -d -s ebpf_sniffer "sudo python3 -u new-architecture-USC.py -p $PIDS --log-handler {log_handler} 2>&1 | tee sniffer_{ip}.log"
 
 echo "==========================================================="
 echo "✅ Setup Complete!"
 echo "Docker services are UP."
-echo "Sniffer is detached and logging to: src/sniffer_{ip}.log"
-echo "Check \`tail -f src/sniffer_{ip}.log\` for live memory profiling."
+echo "Sniffer is running safely in a foreground tmux session!"
+echo "To view the live output anytime, SSH into this server and type:"
+echo "    tmux attach -t ebpf_sniffer"
+echo "To detach again without stopping it, press Ctrl+B, then D."
 echo "==========================================================="
 """
 
@@ -413,7 +427,7 @@ def generate():
             f.write(compose_content)
             
         # 2. Generate setup script
-        script_content = BASH_TEMPLATE.format(ip=ip, is_manager=is_manager)
+        script_content = BASH_TEMPLATE.format(ip=ip, is_manager=is_manager, log_handler=LOG_HANDLER_URL)
         script_path = f"swarm_scripts/setup_node_{ip}.sh"
         with open(script_path, "w") as f:
             f.write(script_content)

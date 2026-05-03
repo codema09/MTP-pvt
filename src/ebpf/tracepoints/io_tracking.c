@@ -232,8 +232,21 @@ static inline void detect_and_emit_outgoing_thrift(void *ctx, struct sock *sk, i
         }
     }
 
-    if (!is_thrift) return;
-    if (msg_type != 1 && msg_type != 4) return;
+    u16 dport_local = 0;
+    if (sk != NULL) {
+        struct inet_sock *inet_tmp = (struct inet_sock *)sk;
+        u16 dport_be_tmp = 0;
+        bpf_probe_read_kernel(&dport_be_tmp, sizeof(u16), &inet_tmp->inet_dport);
+        dport_local = bpf_ntohs(dport_be_tmp);
+    }
+
+    u8 is_db = 0;
+    if (dport_local == 11211 || dport_local == 27017 || dport_local == 6379 || dport_local == 3306) {
+        is_db = 1;
+    }
+
+    if (!is_thrift && !is_db) return;
+    if (!is_db && msg_type != 1 && msg_type != 4) return;
 
     u32 zero = 0;
     struct thrift_out_event_t *evt = thrift_out_scratch.lookup(&zero);
@@ -249,8 +262,8 @@ static inline void detect_and_emit_outgoing_thrift(void *ctx, struct sock *sk, i
         bpf_probe_read_kernel(&evt->dst_ip, sizeof(u32), &inet->inet_daddr);
         bpf_probe_read_kernel(&sport_be, sizeof(u16), &inet->inet_sport);
         bpf_probe_read_kernel(&dport_be, sizeof(u16), &inet->inet_dport);
-        evt->src_port = bpf_ntohs(dport_be);
-        evt->dst_port = bpf_ntohs(sport_be);
+        evt->src_port = bpf_ntohs(sport_be);
+        evt->dst_port = bpf_ntohs(dport_be);
     }
 
     struct request_id_key_t *req_id_key = tid_to_request_id.lookup(&tid);
@@ -262,6 +275,14 @@ static inline void detect_and_emit_outgoing_thrift(void *ctx, struct sock *sk, i
         evt->has_request_id = 1;
     } else {
         evt->has_request_id = 0;
+    }
+
+    if (is_db && !is_thrift) {
+        evt->method[0] = 'D'; evt->method[1] = 'B'; evt->method[2] = '_'; evt->method[3] = 'O'; evt->method[4] = 'P'; evt->method[5] = '\0';
+        evt->seq_id = 0;
+        evt->payload_req_id = 0;
+        thrift_out_events.perf_submit(ctx, evt, sizeof(*evt));
+        return;
     }
 
     if (name_len > 0 && name_len <= 32) {
@@ -362,6 +383,43 @@ TRACEPOINT_PROBE(syscalls, sys_enter_writev) {
             u8 type = 2;
             active_sock_op.update(&tid, &type);
             
+            struct inet_sock *inet = (struct inet_sock *)sk;
+            u16 dport_be = 0;
+            bpf_probe_read_kernel(&dport_be, sizeof(u16), &inet->inet_dport);
+            u16 dport_local = bpf_ntohs(dport_be);
+
+            if (dport_local == 11211 || dport_local == 27017 || dport_local == 6379 || dport_local == 3306) {
+                u32 zero = 0;
+                struct thrift_out_event_t *evt = thrift_out_scratch.lookup(&zero);
+                if (evt) {
+                    __builtin_memset(evt, 0, sizeof(*evt));
+                    evt->tid = tid;
+                    u16 sport_be = 0;
+                    bpf_probe_read_kernel(&evt->src_ip, sizeof(u32), &inet->inet_saddr);
+                    bpf_probe_read_kernel(&evt->dst_ip, sizeof(u32), &inet->inet_daddr);
+                    bpf_probe_read_kernel(&sport_be, sizeof(u16), &inet->inet_sport);
+                    evt->src_port = bpf_ntohs(sport_be);
+                    evt->dst_port = bpf_ntohs(dport_be);
+
+                    struct request_id_key_t *req_id_key = tid_to_request_id.lookup(&tid);
+                    if (req_id_key) {
+                        #pragma unroll
+                        for (int i = 0; i < MAX_REQUEST_ID_LEN; i++) {
+                            evt->parent_request_id[i] = req_id_key->id[i];
+                        }
+                        evt->has_request_id = 1;
+                    } else {
+                        evt->has_request_id = 0;
+                    }
+
+                    evt->method[0] = 'D'; evt->method[1] = 'B'; evt->method[2] = '_'; evt->method[3] = 'O'; evt->method[4] = 'P'; evt->method[5] = '\0';
+                    evt->seq_id = 0;
+                    evt->payload_req_id = 0;
+                    thrift_out_events.perf_submit(args, evt, sizeof(*evt));
+                }
+                return 0; // DB captured, don't check for Thrift
+            }
+
             struct iovec_local iov[2];
             unsigned long count2 = args->vlen;
             if (count2 > 2) count2 = 2; // only read up to 2 iovecs
@@ -398,6 +456,43 @@ TRACEPOINT_PROBE(syscalls, sys_enter_sendmsg) {
     u8 type = 2;
     active_sock_op.update(&tid, &type);
 
+    struct inet_sock *inet = (struct inet_sock *)sk;
+    u16 dport_be = 0;
+    bpf_probe_read_kernel(&dport_be, sizeof(u16), &inet->inet_dport);
+    u16 dport_local = bpf_ntohs(dport_be);
+
+    if (dport_local == 11211 || dport_local == 27017 || dport_local == 6379 || dport_local == 3306) {
+        u32 zero = 0;
+        struct thrift_out_event_t *evt = thrift_out_scratch.lookup(&zero);
+        if (evt) {
+            __builtin_memset(evt, 0, sizeof(*evt));
+            evt->tid = tid;
+            u16 sport_be = 0;
+            bpf_probe_read_kernel(&evt->src_ip, sizeof(u32), &inet->inet_saddr);
+            bpf_probe_read_kernel(&evt->dst_ip, sizeof(u32), &inet->inet_daddr);
+            bpf_probe_read_kernel(&sport_be, sizeof(u16), &inet->inet_sport);
+            evt->src_port = bpf_ntohs(sport_be);
+            evt->dst_port = bpf_ntohs(dport_be);
+
+            struct request_id_key_t *req_id_key = tid_to_request_id.lookup(&tid);
+            if (req_id_key) {
+                #pragma unroll
+                for (int i = 0; i < MAX_REQUEST_ID_LEN; i++) {
+                    evt->parent_request_id[i] = req_id_key->id[i];
+                }
+                evt->has_request_id = 1;
+            } else {
+                evt->has_request_id = 0;
+            }
+
+            evt->method[0] = 'D'; evt->method[1] = 'B'; evt->method[2] = '_'; evt->method[3] = 'O'; evt->method[4] = 'P'; evt->method[5] = '\0';
+            evt->seq_id = 0;
+            evt->payload_req_id = 0;
+            thrift_out_events.perf_submit(args, evt, sizeof(*evt));
+        }
+        return 0; // DB captured, don't check for Thrift
+    }
+
     struct user_msghdr_local msg;
     if (bpf_probe_read_user(&msg, sizeof(msg), (void *)args->msg) == 0) {
         struct iovec_local iov[2];
@@ -409,6 +504,58 @@ TRACEPOINT_PROBE(syscalls, sys_enter_sendmsg) {
             } else if (count2 == 2 && iov[1].iov_len >= 8) {
                 detect_and_emit_outgoing_thrift(args, sk, fd, iov[1].iov_base, iov[1].iov_len, tid);
             }
+        }
+    }
+    return 0;
+}
+
+TRACEPOINT_PROBE(syscalls, sys_enter_sendmmsg) {
+    if (!is_target_process()) return 0;
+    u32 tid = (u32)bpf_get_current_pid_tgid();
+    u32 fd = (u32)args->fd;
+
+    struct sock *sk = get_sock_from_fd(fd);
+    if (sk == NULL) return 0;
+    u16 family;
+    bpf_probe_read_kernel(&family, sizeof(family), &sk->__sk_common.skc_family);
+    if (family != AF_INET) return 0;
+
+    u8 type = 2;
+    active_sock_op.update(&tid, &type);
+
+    struct inet_sock *inet = (struct inet_sock *)sk;
+    u16 dport_be = 0;
+    bpf_probe_read_kernel(&dport_be, sizeof(u16), &inet->inet_dport);
+    u16 dport_local = bpf_ntohs(dport_be);
+
+    if (dport_local == 11211 || dport_local == 27017 || dport_local == 6379 || dport_local == 3306) {
+        u32 zero = 0;
+        struct thrift_out_event_t *evt = thrift_out_scratch.lookup(&zero);
+        if (evt) {
+            __builtin_memset(evt, 0, sizeof(*evt));
+            evt->tid = tid;
+            u16 sport_be = 0;
+            bpf_probe_read_kernel(&evt->src_ip, sizeof(u32), &inet->inet_saddr);
+            bpf_probe_read_kernel(&evt->dst_ip, sizeof(u32), &inet->inet_daddr);
+            bpf_probe_read_kernel(&sport_be, sizeof(u16), &inet->inet_sport);
+            evt->src_port = bpf_ntohs(sport_be);
+            evt->dst_port = bpf_ntohs(dport_be);
+
+            struct request_id_key_t *req_id_key = tid_to_request_id.lookup(&tid);
+            if (req_id_key) {
+                #pragma unroll
+                for (int i = 0; i < MAX_REQUEST_ID_LEN; i++) {
+                    evt->parent_request_id[i] = req_id_key->id[i];
+                }
+                evt->has_request_id = 1;
+            } else {
+                evt->has_request_id = 0;
+            }
+
+            evt->method[0] = 'D'; evt->method[1] = 'B'; evt->method[2] = '_'; evt->method[3] = 'O'; evt->method[4] = 'P'; evt->method[5] = '\0';
+            evt->seq_id = 0;
+            evt->payload_req_id = 0;
+            thrift_out_events.perf_submit(args, evt, sizeof(*evt));
         }
     }
     return 0;

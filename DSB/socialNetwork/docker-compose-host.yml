@@ -1,0 +1,1246 @@
+version: '3'
+services:
+  jaeger-agent:
+    image: jaegertracing/jaeger-agent:latest
+    hostname: jaeger-agent
+    command:
+    - --reporter.grpc.host-port=jaeger-collector:14250
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  compose-post-service:
+    command:
+    - ComposePostService
+    hostname: compose-post-service
+    image: deathstarbench/social-network-microservices:latest
+    volumes:
+    - ./config:/social-network-microservices/config
+    - ./keys:/keys
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  home-timeline-redis:
+    hostname: home-timeline-redis
+    image: redis
+    command: redis-server /social-network-microservices/config/redis.conf
+    volumes:
+    - ./config:/social-network-microservices/config
+    - ./keys:/keys
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  home-timeline-service:
+    command:
+    - HomeTimelineService
+    hostname: home-timeline-service
+    image: deathstarbench/social-network-microservices:latest
+    volumes:
+    - ./config:/social-network-microservices/config
+    - ./keys:/keys
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  media-frontend:
+    hostname: media-frontend
+    image: yg397/media-frontend:xenial
+    volumes:
+    - ./media-frontend/lua-scripts:/usr/local/openresty/nginx/lua-scripts
+    - ./media-frontend/conf/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  media-memcached:
+    hostname: media-memcached
+    image: memcached
+    command:
+    - -m 16384
+    - -t 8
+    - -I 32m
+    - -c 4096
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  media-mongodb:
+    hostname: media-mongodb
+    image: mongo:4.4.6
+    command: mongod --nojournal --quiet --config /social-network-microservices/config/mongod.conf
+    volumes:
+    - ./config:/social-network-microservices/config
+    - ./keys:/keys
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  media-service:
+    command:
+    - MediaService
+    hostname: media-service
+    image: deathstarbench/social-network-microservices:latest
+    volumes:
+    - ./config:/social-network-microservices/config
+    - ./keys:/keys
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  nginx-web-server:
+    hostname: nginx-web-server
+    image: yg397/openresty-thrift:xenial
+    volumes:
+    - ./nginx-web-server/lua-scripts:/usr/local/openresty/nginx/lua-scripts
+    - ./nginx-web-server/pages:/usr/local/openresty/nginx/pages
+    - ./nginx-web-server/conf/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+    - ./nginx-web-server/jaeger-config.json:/usr/local/openresty/nginx/jaeger-config.json
+    - ./gen-lua:/gen-lua
+    - ./docker/openresty-thrift/lua-thrift:/usr/local/openresty/lualib/thrift
+    - ./keys:/keys
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  post-storage-memcached:
+    hostname: post-storage-memcached
+    image: memcached
+    command:
+    - -m 16384
+    - -t 8
+    - -I 32m
+    - -c 4096
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  post-storage-mongodb:
+    hostname: post-storage-mongodb
+    image: mongo:4.4.6
+    command: mongod --nojournal --quiet --config /social-network-microservices/config/mongod.conf
+    volumes:
+    - ./config:/social-network-microservices/config
+    - ./keys:/keys
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  post-storage-service:
+    command:
+    - PostStorageService
+    hostname: post-storage-service
+    image: deathstarbench/social-network-microservices:latest
+    volumes:
+    - ./config:/social-network-microservices/config
+    - ./keys:/keys
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  social-graph-mongodb:
+    hostname: social-graph-mongodb
+    image: mongo:4.4.6
+    command: mongod --nojournal --quiet --config /social-network-microservices/config/mongod.conf
+    volumes:
+    - ./config:/social-network-microservices/config
+    - ./keys:/keys
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  social-graph-redis:
+    hostname: social-graph-redis
+    image: redis
+    command: redis-server /social-network-microservices/config/redis.conf
+    volumes:
+    - ./config:/social-network-microservices/config
+    - ./keys:/keys
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  social-graph-service:
+    command:
+    - SocialGraphService
+    hostname: social-graph-service
+    image: deathstarbench/social-network-microservices:latest
+    volumes:
+    - ./config:/social-network-microservices/config
+    - ./keys:/keys
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  text-service:
+    command:
+    - TextService
+    hostname: text-service
+    image: deathstarbench/social-network-microservices:latest
+    volumes:
+    - ./config:/social-network-microservices/config
+    - ./keys:/keys
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  unique-id-service:
+    command:
+    - UniqueIdService
+    hostname: unique-id-service
+    image: deathstarbench/social-network-microservices:latest
+    volumes:
+    - ./config:/social-network-microservices/config
+    - ./keys:/keys
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  url-shorten-memcached:
+    hostname: url-shorten-memcached
+    image: memcached
+    command:
+    - -m 16384
+    - -t 8
+    - -I 32m
+    - -c 4096
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  url-shorten-mongodb:
+    hostname: url-shorten-mongodb
+    image: mongo:4.4.6
+    command: mongod --nojournal --quiet --config /social-network-microservices/config/mongod.conf
+    volumes:
+    - ./config:/social-network-microservices/config
+    - ./keys:/keys
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  url-shorten-service:
+    command:
+    - UrlShortenService
+    hostname: url-shorten-service
+    image: deathstarbench/social-network-microservices:latest
+    volumes:
+    - ./config:/social-network-microservices/config
+    - ./keys:/keys
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  user-memcached:
+    hostname: user-memcached
+    image: memcached
+    command:
+    - -m 16384
+    - -t 8
+    - -I 32m
+    - -c 4096
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  user-mention-service:
+    command:
+    - UserMentionService
+    hostname: user-mention-service
+    image: deathstarbench/social-network-microservices:latest
+    volumes:
+    - ./config:/social-network-microservices/config
+    - ./keys:/keys
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  user-mongodb:
+    hostname: user-mongodb
+    image: mongo:4.4.6
+    command: mongod --nojournal --quiet --config /social-network-microservices/config/mongod.conf
+    volumes:
+    - ./config:/social-network-microservices/config
+    - ./keys:/keys
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  user-service:
+    command:
+    - UserService
+    hostname: user-service
+    image: deathstarbench/social-network-microservices:latest
+    volumes:
+    - ./config:/social-network-microservices/config
+    - ./keys:/keys
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  user-timeline-mongodb:
+    hostname: user-timeline-mongodb
+    image: mongo:4.4.6
+    command: mongod --nojournal --quiet --config /social-network-microservices/config/mongod.conf
+    volumes:
+    - ./config:/social-network-microservices/config
+    - ./keys:/keys
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  user-timeline-redis:
+    hostname: user-timeline-redis
+    image: redis
+    command: redis-server /social-network-microservices/config/redis.conf
+    volumes:
+    - ./config:/social-network-microservices/config
+    - ./keys:/keys
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  user-timeline-service:
+    command:
+    - UserTimelineService
+    hostname: user-timeline-service
+    image: deathstarbench/social-network-microservices:latest
+    volumes:
+    - ./config:/social-network-microservices/config
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  jaeger-collector:
+    image: jaegertracing/jaeger-collector
+    command:
+    - --cassandra.keyspace=jaeger_v1_dc1
+    - --cassandra.servers=cassandra
+    - --collector.zipkin.host-port=9411
+    - --collector.num-workers=100
+    - --collector.queue-size=100000
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  jaeger-query:
+    image: jaegertracing/jaeger-query
+    command:
+    - --cassandra.keyspace=jaeger_v1_dc1
+    - --cassandra.servers=cassandra
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  cassandra-schema:
+    image: jaegertracing/jaeger-cassandra-schema
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98
+  cassandra:
+    image: cassandra:3.9
+    network_mode: host
+    extra_hosts:
+    - nginx-web-server:10.5.30.93
+    - media-frontend:10.5.30.94
+    - compose-post-service:10.5.30.95
+    - home-timeline-service:10.5.30.96
+    - media-service:10.5.30.97
+    - post-storage-service:10.5.30.98
+    - social-graph-service:10.5.30.99
+    - text-service:10.5.30.100
+    - unique-id-service:10.5.30.101
+    - url-shorten-service:10.5.30.102
+    - user-mention-service:10.5.30.103
+    - user-service:10.5.30.104
+    - user-timeline-service:10.5.30.105
+    - media-mongodb:10.5.30.106
+    - post-storage-mongodb:10.5.30.107
+    - social-graph-mongodb:10.5.30.108
+    - url-shorten-mongodb:10.5.30.109
+    - user-mongodb:10.5.30.110
+    - user-timeline-mongodb:10.5.30.111
+    - media-memcached:10.5.30.112
+    - post-storage-memcached:10.5.30.113
+    - url-shorten-memcached:10.5.30.114
+    - user-memcached:10.5.30.115
+    - home-timeline-redis:10.5.30.116
+    - social-graph-redis:10.5.30.117
+    - user-timeline-redis:10.5.30.93
+    - cassandra:10.5.30.94
+    - jaeger-agent:10.5.30.95
+    - jaeger-collector:10.5.30.96
+    - jaeger-query:10.5.30.97
+    - cassandra-schema:10.5.30.98

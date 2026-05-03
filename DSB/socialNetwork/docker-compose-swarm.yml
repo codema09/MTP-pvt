@@ -21,6 +21,8 @@ services:
     deploy:
       restart_policy:
         condition: any
+        delay: 5s
+        max_attempts: 40
     depends_on:
       - jaeger-collector
 
@@ -32,6 +34,8 @@ services:
       replicas: 1
       restart_policy:
         condition: any
+        delay: 5s
+        max_attempts: 40
     command: ["ComposePostService"]
     hostname: compose-post-service
     image: deathstarbench/social-network-microservices:latest
@@ -58,6 +62,8 @@ services:
       replicas: 1
       restart_policy:
         condition: any
+        delay: 5s
+        max_attempts: 40
     command: ["HomeTimelineService"]
     hostname: home-timeline-service
     image: deathstarbench/social-network-microservices:latest
@@ -73,6 +79,8 @@ services:
       replicas: 1
       restart_policy:
         condition: any
+        delay: 5s
+        max_attempts: 40
     hostname: media-frontend
     image: yg397/media-frontend:xenial
     ports:
@@ -114,6 +122,8 @@ services:
       replicas: 1
       restart_policy:
         condition: any
+        delay: 5s
+        max_attempts: 40
     command: ["MediaService"]
     hostname: media-service
     image: deathstarbench/social-network-microservices:latest
@@ -129,6 +139,8 @@ services:
       replicas: 1
       restart_policy:
         condition: any
+        delay: 5s
+        max_attempts: 40
     hostname: nginx-web-server
     image: yg397/openresty-thrift:xenial
     ports:
@@ -175,6 +187,8 @@ services:
       replicas: 1
       restart_policy:
         condition: any
+        delay: 5s
+        max_attempts: 40
     command: ["PostStorageService"]
     hostname: post-storage-service
     image: deathstarbench/social-network-microservices:latest
@@ -214,6 +228,8 @@ services:
       replicas: 1
       restart_policy:
         condition: any
+        delay: 5s
+        max_attempts: 40
     command: ["SocialGraphService"]
     hostname: social-graph-service
     image: deathstarbench/social-network-microservices:latest
@@ -229,6 +245,8 @@ services:
       replicas: 1
       restart_policy:
         condition: any
+        delay: 5s
+        max_attempts: 40
     command: ["TextService"]
     hostname: text-service
     image: deathstarbench/social-network-microservices:latest
@@ -244,6 +262,8 @@ services:
       replicas: 1
       restart_policy:
         condition: any
+        delay: 5s
+        max_attempts: 40
     command: ["UniqueIdService"]
     hostname: unique-id-service
     image: deathstarbench/social-network-microservices:latest
@@ -284,6 +304,8 @@ services:
       replicas: 1
       restart_policy:
         condition: any
+        delay: 5s
+        max_attempts: 40
     command: ["UrlShortenService"]
     hostname: url-shorten-service
     image: deathstarbench/social-network-microservices:latest
@@ -311,6 +333,8 @@ services:
       replicas: 1
       restart_policy:
         condition: any
+        delay: 5s
+        max_attempts: 40
     command: ["UserMentionService"]
     hostname: user-mention-service
     image: deathstarbench/social-network-microservices:latest
@@ -339,6 +363,8 @@ services:
       replicas: 1
       restart_policy:
         condition: any
+        delay: 5s
+        max_attempts: 40
     command: ["UserService"]
     hostname: user-service
     image: deathstarbench/social-network-microservices:latest
@@ -377,6 +403,8 @@ services:
       replicas: 1
       restart_policy:
         condition: any
+        delay: 5s
+        max_attempts: 40
     command: ["UserTimelineService"]
     hostname: user-timeline-service
     image: deathstarbench/social-network-microservices:latest
@@ -398,6 +426,8 @@ services:
     deploy:
       restart_policy:
         condition: any
+        delay: 5s
+        max_attempts: 40
     depends_on:
       - cassandra-schema
 
@@ -410,6 +440,8 @@ services:
     deploy:
       restart_policy:
         condition: any
+        delay: 5s
+        max_attempts: 40
     depends_on:
       - cassandra-schema
 

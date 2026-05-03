@@ -139,12 +139,18 @@ if __name__ == '__main__':
   parser.add_argument('--compose', action='store_true',
                       help='intialize with up to 20 posts per user', default=False)
   parser.add_argument('--limit', type=int, help='total number simultaneous connections', default=200)
+  parser.add_argument('--max-nodes', type=int, help='total number of users to initialize', default=20)
   args = parser.parse_args()
 
   with open(os.path.join('datasets/social-graph', args.graph, f'{args.graph}.nodes'), 'r') as f:
     nodes = getNumNodes(f)
   with open(os.path.join('datasets/social-graph', args.graph, f'{args.graph}.edges'), 'r') as f:
     edges = getEdges(f)
+
+  if args.max_nodes:
+    nodes = min(nodes, args.max_nodes)
+    edges = [e for e in edges if int(e[0]) < nodes and int(e[1]) < nodes]
+
 
   random.seed(1)   # deterministic random numbers
 

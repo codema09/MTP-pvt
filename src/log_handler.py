@@ -65,6 +65,9 @@ class LogHandler:
         # Unmatched connections (no corresponding ENTRY found)
         self.unmatched = []
 
+        # Track external database connections (Memcached/Redis/Mongo) to render as leaves
+        self.backend_edges = defaultdict(list)
+
         # Track which machines have reported
         self.machines = {}
 
@@ -149,6 +152,7 @@ class LogHandler:
         """Match each NEW CONNECTION to an ENTRY to build parent→child edges."""
         self.call_graph.clear()
         self.unmatched.clear()
+        self.backend_edges.clear()
         self._build_entry_index()
 
         for parent_req_id, conns in self.connections.items():
@@ -177,7 +181,7 @@ class LogHandler:
 
                 if not candidates:
                     dst_port = int(conn['dst_port'])
-                    category = KNOWN_SERVICES.get(dst_port, 'unknown')
+                    category = KNOWN_SERVICES.get(dst_port, 'External')
                     self.unmatched.append({
                         'parent_request_id': parent_req_id,
                         'connection': {
@@ -188,6 +192,10 @@ class LogHandler:
                         'reason': 'no_matching_entry',
                         'category': category,
                     })
+                    
+                    # Add to visual render queue
+                    backend_label = f"[{category}] {conn['dst_ip']}:{dst_port}"
+                    self.backend_edges[parent_req_id].append(backend_label)
                     continue
 
                 if len(candidates) == 1:
@@ -211,7 +219,10 @@ class LogHandler:
         """Rebuild the call graph if data has changed since last build."""
         with self.lock:
             if self._graph_dirty:
+                start_time = datetime.now()
                 self._build_call_graph()
+                end_time = datetime.now()
+                print(f"[GRAPH] [{end_time.isoformat()}] Call graph structurally processed and built in {(end_time - start_time).total_seconds()} seconds.")
 
     # ───────────────────────────────────────────────────────────
     # Query Methods
@@ -351,12 +362,34 @@ class LogHandler:
         visited.add(req_id)
 
         children = self.call_graph.get(req_id, [])
-        new_prefix = prefix + ("    " if is_last else "│   ")
-        total = len(children)
+        backends = self.backend_edges.get(req_id, [])
+        
+        # Group identical backend calls (e.g. 5x Memcached calls)
+        grouped_backends = {}
+        for b in backends:
+            grouped_backends[b] = grouped_backends.get(b, 0) + 1
+            
+        unique_backends = []
+        for name, count in grouped_backends.items():
+            if count > 1:
+                unique_backends.append(f"{name} ({count} calls)")
+            else:
+                unique_backends.append(name)
 
+        new_prefix = prefix + ("    " if is_last else "│   ")
+        total = len(children) + len(unique_backends)
+        
+        # 1. Render actual Thrift children
         for i, child_id in enumerate(children):
             is_child_last = (i == total - 1)
             self._render_tree(child_id, new_prefix, is_child_last, lines, visited)
+
+        # 2. Render backend database calls as terminal leaf nodes
+        for i, backend_str in enumerate(unique_backends):
+            idx = len(children) + i
+            is_child_last = (idx == total - 1)
+            child_connector = "└── " if is_child_last else "├── "
+            lines.append(f"{new_prefix}{child_connector}⛁ {backend_str}")
 
     def _accumulate_metrics(self, req_id, visited):
         """Recursively sum metrics for a request and its children."""
@@ -421,7 +454,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self._send_json(400, {'error': f'Invalid JSON: {e}'})
                 return
             result = handler_instance.ingest(payload)
-            print(f"[INGEST] {result['machine_id']}: "
+            print(f"[INGEST] [{datetime.now().isoformat()}] {result['machine_id']}: "
                   f"{result['requests_ingested']} requests, "
                   f"{result['connections_ingested']} connections")
             self._send_json(200, result)

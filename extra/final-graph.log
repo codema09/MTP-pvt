@@ -1,0 +1,42 @@
+└── ComposePost_seq0_0615430f99ab72b9  [172.18.0.19:9090] (10014.16ms) @archlinux | socialnetwork-compose-post-service-1(356555)
+    ├── ComposeUniqueId_seq0_6fa01c06f6170906  [172.18.0.17:9090] (0.08ms) @archlinux | socialnetwork-unique-id-service-1(356339)
+    ├── StorePost_seq0_e91572dd694ba364  [172.18.0.22:9090] (0.32ms) @archlinux | socialnetwork-post-storage-service-1(356940)
+    │   ├── ⛁ [DNS] 127.0.0.11:53
+    │   └── ⛁ [MongoDB] 172.18.0.12:27017 (2 calls)
+    ├── WriteHomeTimeline_seq0_1559d6659a717ad0  [172.18.0.18:9090] (0.65ms) @archlinux | socialnetwork-home-timeline-service-1(356461)
+    │   ├── GetFollowers_seq0_30e710bee09f9bbc  [172.18.0.27:9090] (0.54ms) @archlinux | socialnetwork-social-graph-service-1(356995)
+    │   │   ├── ⛁ [Redis] 172.18.0.5:6379
+    │   │   └── ⛁ [MongoDB] 172.18.0.13:27017
+    │   ├── GetFollowers_seq0_c50648941e1a2076  [172.18.0.27:9090] (0.54ms) @archlinux | socialnetwork-social-graph-service-1(356995)
+    │   │   ├── ⛁ [Redis] 172.18.0.5:6379
+    │   │   └── ⛁ [MongoDB] 172.18.0.13:27017
+    │   ├── ⛁ [Redis] 172.18.0.2:6379 (2 calls)
+    │   └── ⛁ [DNS] 127.0.0.11:53 (2 calls)
+    ├── ComposeText_seq0_bd5f9e85c187db30  [172.18.0.21:9090] (0.40ms) @archlinux | socialnetwork-text-service-1(356693)
+    │   ├── ComposeUrls_seq0_ef232195597cca6d  [172.18.0.26:9090] (0.07ms) @archlinux | socialnetwork-url-shorten-service-1(356883)
+    │   └── ComposeUserMentions_seq0_e80af4f2a0926887  [172.18.0.24:9090] (0.07ms) @archlinux | socialnetwork-user-mention-service-1(356790)
+    ├── ComposeMedia_seq0_dbe0a951c443c5bc  [172.18.0.28:9090] (0.12ms) @archlinux | socialnetwork-media-service-1(357034)
+    ├── ComposeCreatorWithUserId_seq0_0a343f4130295204  [172.18.0.20:9090] (0.07ms) @archlinux | socialnetwork-user-service-1(356643)
+    └── WriteUserTimeline_seq0_aab76b66ac37df83  [172.18.0.23:9090] (0.93ms) @archlinux | socialnetwork-user-timeline-service-1(356732)
+        ├── ⛁ [MongoDB] 172.18.0.7:27017
+        ├── ⛁ [Redis] 172.18.0.14:6379 (3 calls)
+        └── ⛁ [DNS] 127.0.0.11:53
+
+
+
+└── FollowWithUsername_seq0_00e160e5b81565c6  [172.18.0.24:9090] (2008.96ms) @archlinux | socialnetwork-social-graph-service-1(294370)
+    ├── GetUserId_seq0_8066bce5502c9477  [172.18.0.28:9090] (0.50ms) @archlinux | socialnetwork-user-service-1(294982)
+    │   └── ⛁ [Memcached] 172.18.0.9:11211
+    ├── GetUserId_seq0_91ad51131b2bace8  [172.18.0.28:9090] (0.15ms) @archlinux | socialnetwork-user-service-1(294982)
+    │   └── ⛁ [Memcached] 172.18.0.9:11211
+    ├── ⛁ [MongoDB] 172.18.0.5:27017 (2 calls)
+    └── ⛁ [Redis] 172.18.0.6:6379
+
+└── FollowWithUsername_seq0_025e29377244e759  [172.18.0.24:9090] (2831.97ms) @archlinux | socialnetwork-social-graph-service-1(294370)
+    ├── GetUserId_seq0_585958d9c608bfc9  [172.18.0.28:9090] (0.84ms) @archlinux | socialnetwork-user-service-1(294982)
+    │   ├── ⛁ [Memcached] 172.18.0.9:11211
+    │   └── ⛁ [MongoDB] 172.18.0.15:27017
+    ├── GetUserId_seq0_991d54b839513ef1  [172.18.0.28:9090] (0.17ms) @archlinux | socialnetwork-user-service-1(294982)
+    │   └── ⛁ [Memcached] 172.18.0.9:11211
+    ├── ⛁ [Redis] 172.18.0.6:6379
+    └── ⛁ [MongoDB] 172.18.0.5:27017 (2 calls)
