@@ -1,0 +1,25 @@
+10.5.30.93:nginx-web-server user-timeline-redis
+10.5.30.94:media-frontend cassandra
+10.5.30.95:compose-post-service jaeger-agent
+10.5.30.96:home-timeline-service jaeger-collector
+10.5.30.97:media-service jaeger-query
+10.5.30.98:post-storage-service cassandra-schema
+10.5.30.99:social-graph-service
+10.5.30.100:text-service
+10.5.30.101:unique-id-service
+10.5.30.102:url-shorten-service
+10.5.30.103:user-mention-service
+10.5.30.104:user-service
+10.5.30.105:user-timeline-service
+10.5.30.106:media-mongodb
+10.5.30.107:post-storage-mongodb
+10.5.30.108:social-graph-mongodb
+10.5.30.109:url-shorten-mongodb
+10.5.30.110:user-mongodb
+10.5.30.111:user-timeline-mongodb
+10.5.30.112:media-memcached
+10.5.30.113:post-storage-memcached
+10.5.30.114:url-shorten-memcached
+10.5.30.115:user-memcached
+10.5.30.116:home-timeline-redis
+10.5.30.117:social-graph-redis
