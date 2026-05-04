@@ -146,7 +146,7 @@ if [ -n "\$PIDS" ]; then
     echo "Logs are being silently written to live_single.log"
     echo "(Press Ctrl+C at any time to softly kill the sniffer)"
     echo "========================================================="
-    sudo -E TERM=xterm-256color python3 -u new-architecture-USC.py -p \$PIDS --log-handler http://$MY_IP:5000/ingest >> live_single.log 2>&1
+    sudo -E TERM=xterm-256color python3 -u new-architecture-USC.py -p \$PIDS --log-handler http://$MY_IP:5000/ingest > live_single.log 2>&1
 else
     echo "[ Server ] No containers found on this node to profile."
 fi
