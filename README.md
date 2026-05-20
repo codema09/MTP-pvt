@@ -113,6 +113,11 @@ Machines reported: 25  |  Total requests: 550  |  Total edges: 515  |  Unmatched
 The root span (`ComposePost`) shows ~10,100 ms wall-clock time — a Thrift connection timeout. Despite this, every child span that did reply is captured in full. `WriteUserTimeline` at 76 ms with three sequential MongoDB calls is the single slowest completing child. The five stateless services (`ComposeMedia`, `ComposeUniqueId`, `ComposeCreatorWithUserId`, `ComposeUserMentions`, `ComposeUrls`) all complete in under 0.5 ms. The 440 unmatched connections are database leaf nodes where no USC daemon runs — correctly expected, not missing edges.
 
 ---
+## Reconstructed Distributed Call Graph
+```
+FlowLens reconstructs distributed execution paths as Directed Acyclic Graphs (DAGs) by correlating kernel events, RPC interactions, and network-level identifiers across multiple hosts. The figure below illustrates the execution flow of a `ComposePost` request, including service fan-out, backend database interactions, and cross-machine causal dependencies.
+```
+
 <p align="center">
   <img src="DAG02.png" width="700">
 </p>
