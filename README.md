@@ -113,6 +113,9 @@ Machines reported: 25  |  Total requests: 550  |  Total edges: 515  |  Unmatched
 The root span (`ComposePost`) shows ~10,100 ms wall-clock time — a Thrift connection timeout. Despite this, every child span that did reply is captured in full. `WriteUserTimeline` at 76 ms with three sequential MongoDB calls is the single slowest completing child. The five stateless services (`ComposeMedia`, `ComposeUniqueId`, `ComposeCreatorWithUserId`, `ComposeUserMentions`, `ComposeUrls`) all complete in under 0.5 ms. The 440 unmatched connections are database leaf nodes where no USC daemon runs — correctly expected, not missing edges.
 
 ---
+<p align="center">
+  <img src=DAG02.png" width="700">
+</p>
 
 ### Accumulated Resource Summary (Cluster-Wide Totals per Root Request)
 
