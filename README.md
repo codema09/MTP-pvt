@@ -114,7 +114,7 @@ The root span (`ComposePost`) shows ~10,100 ms wall-clock time — a Thrift conn
 
 ---
 <p align="center">
-  <img = "DAG02.png" width="700">
+  <img src="DAG02.png" width="700">
 </p>
 
 ### Accumulated Resource Summary (Cluster-Wide Totals per Root Request)
